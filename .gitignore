@@ -1,0 +1,25 @@
+node_modules/
+.env
+dist/
+.next/
+build/
+*.tsbuildinfo
+.DS_Store
+coverage/
+.turbo/
+
+# pglite local database
+pglite-data/
+apps/api/pglite-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local env overrides
+.env.local
+.env.*.local
+.env.production
+
+# PM2 runtime
+.pm2/

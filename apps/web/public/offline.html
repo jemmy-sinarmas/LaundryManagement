@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline — Laundry Palu</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      max-width: 400px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      width: 100%;
+    }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: .5rem; }
+    p { color: #6b7280; font-size: .875rem; line-height: 1.5; margin-bottom: 1.5rem; }
+    button {
+      background: #3b82f6;
+      border: none;
+      border-radius: .5rem;
+      color: white;
+      cursor: pointer;
+      font-size: .875rem;
+      font-weight: 600;
+      padding: .625rem 1.5rem;
+    }
+    button:hover { background: #2563eb; }
+    .sub { color: #9ca3af; font-size: .75rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📡</div>
+    <h1>Tidak Ada Koneksi</h1>
+    <p>
+      Anda sedang offline. Pesanan yang dibuat akan disimpan secara lokal
+      dan otomatis dikirim saat koneksi kembali.
+    </p>
+    <button onclick="window.location.reload()">Coba Lagi</button>
+    <p class="sub">Laundry Palu · Offline Mode</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "app": { "name": "Laundry Palu" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "customers": "Customers",
+    "items": "Services",
+    "expenses": "Expenses",
+    "inventory": "Inventory",
+    "reports": "Reports",
+    "users": "Users",
+    "pos": "POS",
+    "logout": "Logout"
+  },
+  "login": {
+    "title": "Sign In",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign In"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel"
+  }
+}

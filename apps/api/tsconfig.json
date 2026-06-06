@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "paths": {
+      "@laundry-palu/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["src", "migrations"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: laundry_palu
+      POSTGRES_USER: laundry
+      POSTGRES_PASSWORD: laundry_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laundry"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://laundry:laundry_dev@postgres:5432/laundry_palu
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-32-chars}
+      JWT_EXPIRES_IN: 8h
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-32-chars}
+      NODE_ENV: production
+      PORT: 3000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
