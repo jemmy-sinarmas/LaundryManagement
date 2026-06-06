@@ -81,7 +81,7 @@ export async function update(
 
   const rows = await db<UserRow>`
     UPDATE users SET nama = ${nama}, role = ${role}, is_active = ${isActiveVal},
-      updated_at = datetime('now')
+      updated_at = NOW()
     WHERE id = ${id}
     RETURNING *
   `;
@@ -94,7 +94,7 @@ export async function updatePassword(
   passwordHash: string
 ): Promise<void> {
   await db`
-    UPDATE users SET password = ${passwordHash}, updated_at = datetime('now')
+    UPDATE users SET password = ${passwordHash}, updated_at = NOW()
     WHERE id = ${id}
   `;
 }

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  ShoppingBag,
   Users,
   Package,
   DollarSign,
@@ -15,7 +14,6 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dasbor',      icon: LayoutDashboard },
-  { href: '/orders',    label: 'Pesanan',      icon: ShoppingBag },
   { href: '/customers', label: 'Pelanggan',    icon: Users },
   { href: '/items',     label: 'Layanan',      icon: Package },
   { href: '/expenses',  label: 'Pengeluaran',  icon: DollarSign },
