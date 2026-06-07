@@ -1,5 +1,6 @@
 # Execution Plan — Laundry Palu
 Approved: 2026-06-06
+Reconciled: 2026-06-07 — all 16 units COMPLETE; see `aidlc-docs/aidlc-state.md` (source of truth).
 
 ## Overview
 16 construction units covering backend (Batches 1–7) then frontend (Batches 8–16).
@@ -11,7 +12,7 @@ Batches 4–7 can be worked in parallel if needed.
 ## Units
 
 ### 01 — monorepo-scaffold
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `package.json` (root, with workspaces: ["apps/*","packages/*"])
@@ -28,7 +29,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 02 — database-foundation
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `apps/api/migrations/001_init.sql` — full schema (identical to `docs/database/schema.sql`)
@@ -45,7 +46,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 03 — auth-users-api
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `apps/api/src/plugins/auth.ts` — JWT plugin, HTTP-only SameSite=Strict cookie
@@ -64,7 +65,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 04 — customer-item-membership-api
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `repos/customer.repo.ts`, `services/customer.service.ts`, `routes/customers/`
@@ -80,7 +81,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 05 — orders-pos-api
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `utils/invoice.ts` — `generateInvoiceNo(db)` → `INV-YYYYMMDD-NNNN`
@@ -99,7 +100,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 06 — expenses-inventory-api
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `utils/fifo.ts` — `calculateFifoAverage(currentQty, currentAvg, inQty, inPrice): number`
@@ -115,7 +116,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 07 — reports-api
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `repos/report.repo.ts` — all aggregation queries
@@ -130,7 +131,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 08 — nextjs-foundation
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `apps/web/next.config.js`, `apps/web/tailwind.config.js`
@@ -150,7 +151,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 09 — auth-users-ui
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(auth)/login/page.tsx`
@@ -166,7 +167,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 10 — customer-membership-ui
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(admin)/customers/page.tsx`, `customers/[id]/page.tsx`
@@ -183,7 +184,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 11 — pos-interface
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(kasir)/pos/page.tsx`
@@ -200,7 +201,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 12 — items-expense-ui
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(admin)/items/page.tsx`
@@ -216,7 +217,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 13 — inventory-ui
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(admin)/inventory/page.tsx`
@@ -232,7 +233,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 14 — reports-dashboard-ui
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/(admin)/dashboard/page.tsx`
@@ -250,7 +251,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 15 — tracking-page
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `app/track/[invoiceNo]/page.tsx`
@@ -266,7 +267,7 @@ Batches 4–7 can be worked in parallel if needed.
 ---
 
 ### 16 — pwa-production
-**Status:** PENDING
+**Status:** COMPLETE
 
 **Key output files:**
 - `apps/web/public/manifest.json`

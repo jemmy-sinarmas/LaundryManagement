@@ -38,3 +38,4 @@
 | 2026-06-06 | Agent | Batch 15 complete | Created track/page.tsx (search by invoice/phone), track/[invoiceId]/page.tsx (status stepper + banner + 404 + bilingual); build clean 17 routes |
 | 2026-06-06 | Agent | Batch 16 started | Unit 16 pwa-production marked IN_PROGRESS |
 | 2026-06-06 | Agent | Batch 16 complete | Added @ducanh2912/next-pwa; created manifest.json, icons/, offline.html, Dockerfile.api, Dockerfile.web; updated next.config.js (withPWA), layout.tsx (manifest meta), docker-compose.yml (+api+web services); sw.js confirmed generated; all 17 routes build clean |
+| 2026-06-07 | Agent | Docs reconciled | Flipped all 16 unit statuses in inception/execution-plan.md PENDING→COMPLETE to match aidlc-state.md (source of truth); added reconciliation banner; untracked generated PWA artifacts (sw.js, workbox-*.js, fallback-*.js) and added apps/web/.gitignore |
