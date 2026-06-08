@@ -47,7 +47,6 @@ await fastify.register(expenseRoutes,         { prefix: '/api/v1/expenses' });
 await fastify.register(inventoryRoutes,       { prefix: '/api/v1/inventory' });
 await fastify.register(reportRoutes,          { prefix: '/api/v1/reports' });
 
-fastify.get('/healthz', async () => ({ status: 'ok' }));
 fastify.get('/health', async () => ({ status: 'ok' }));
 
 const PORT = Number(process.env['PORT'] ?? 4000);
