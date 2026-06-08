@@ -10,7 +10,10 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // standalone output is only needed for Docker builds (Linux).
+  // On Windows, Next.js standalone traces pnpm symlinks which requires
+  // Developer Mode. Skip it locally; Docker sets NEXT_STANDALONE=true.
+  output: process.env.NEXT_STANDALONE === 'true' ? 'standalone' : undefined,
   experimental: { serverActions: { allowedOrigins: ['localhost:3000'] } },
   async headers() {
     return [
