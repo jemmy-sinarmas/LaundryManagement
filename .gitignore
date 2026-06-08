@@ -1,6 +1,8 @@
 node_modules/
 .env
 dist/
+# Keep shared package dist — needed at runtime (no tsx remapping through pnpm symlinks on Node 24)
+!packages/shared/dist/
 .next/
 build/
 *.tsbuildinfo

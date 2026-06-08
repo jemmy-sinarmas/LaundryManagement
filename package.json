@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.1.0",
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @laundry-palu/web run dev\" \"pnpm --filter @laundry-palu/api run dev\"",
+    "dev": "pnpm --filter @laundry-palu/shared run build && concurrently \"pnpm --filter @laundry-palu/web run dev\" \"pnpm --filter @laundry-palu/api run dev\"",
     "build": "pnpm --filter @laundry-palu/shared run build && pnpm --filter @laundry-palu/api run build && pnpm --filter @laundry-palu/web run build",
     "test": "pnpm --filter @laundry-palu/api run test",
     "typecheck": "pnpm --filter @laundry-palu/api run typecheck && pnpm --filter @laundry-palu/web run typecheck",
