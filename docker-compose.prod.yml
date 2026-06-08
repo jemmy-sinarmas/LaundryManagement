@@ -1,0 +1,64 @@
+version: '3.9'
+
+# Production compose — uses pre-built images from GHCR, no local build.
+#
+# Usage:
+#   cp .env.prod.example .env.prod   # fill in real values
+#   echo YOUR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Migrations (run before first deploy or after schema changes):
+#   docker run --rm \
+#     --network laundrymanagement_default \
+#     -e DATABASE_URL="${DATABASE_URL}" \
+#     ghcr.io/${GHCR_OWNER}/laundry-api:${IMAGE_TAG:-latest} \
+#     node apps/api/dist/migrations/run.js
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-laundry_palu}
+      POSTGRES_USER: ${POSTGRES_USER:-laundry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-laundry}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/laundry-api:${IMAGE_TAG:-latest}
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/${GHCR_OWNER}/laundry-web:${IMAGE_TAG:-latest}
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
