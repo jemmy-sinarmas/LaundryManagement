@@ -13,7 +13,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "pnpm run lint",
+    "command": "pnpm --filter @laundry-palu/web run lint",
     "timeout": 60
   }
 }

@@ -13,7 +13,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "pnpm run typecheck",
+    "command": "pnpm --filter @laundry-palu/api run typecheck && pnpm --filter @laundry-palu/web run typecheck",
     "timeout": 60
   }
 }
