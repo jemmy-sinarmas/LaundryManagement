@@ -3,12 +3,12 @@
   "private": true,
   "packageManager": "pnpm@9.1.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=apps/web\" \"npm run dev --workspace=apps/api\"",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "lint:fix": "npm run lint:fix --workspaces --if-present"
+    "dev": "concurrently \"pnpm --filter @laundry-palu/web run dev\" \"pnpm --filter @laundry-palu/api run dev\"",
+    "build": "pnpm --filter @laundry-palu/shared run build && pnpm --filter @laundry-palu/api run build && pnpm --filter @laundry-palu/web run build",
+    "test": "pnpm --filter @laundry-palu/api run test",
+    "typecheck": "pnpm --filter @laundry-palu/api run typecheck && pnpm --filter @laundry-palu/web run typecheck",
+    "lint": "pnpm --filter @laundry-palu/web run lint",
+    "lint:fix": "pnpm --filter @laundry-palu/web run lint:fix"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
