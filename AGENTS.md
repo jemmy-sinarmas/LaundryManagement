@@ -196,6 +196,11 @@ Skills activate automatically based on user intent. Files are in `docs/skills/`.
 **File:** `docs/skills/i18n/SKILL.md`
 **Covers:** Adding/editing keys in `apps/web/src/i18n/id.json` and `en.json`.
 
+### Skill: `aws-knowledge`
+**Triggers when:** AWS deployment, RDS, ECS, ECR, S3, CloudFormation, CDK, VPC, IAM, ALB, Route 53, Fargate, Secrets Manager, SSM, CI/CD on AWS, container registry, cloud hosting, infrastructure.
+**File:** `docs/skills/aws-knowledge/SKILL.md`
+**Covers:** Using the AWS Knowledge MCP (`aws-docs` server) to look up live AWS documentation during Architecture Review, Infrastructure Design, Code Generation, and Operations stages. Enforces project defaults: `ap-southeast-1`, PostgreSQL 15, Node.js 20, raw SQL only.
+
 ---
 
 ## Key Business Rules (Do Not Change Without PRD Update)

@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Test on Service/Repo Change",
+  "description": "Runs the Vitest test suite whenever a service or repository file is saved — these are the highest-risk business logic files",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "apps/api/src/**/*.service.ts",
+      "apps/api/src/**/*.repo.ts"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "cd apps/api && npm run test -- --run",
+    "timeout": 120
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Build Verify on Agent Stop",
+  "description": "Runs the production build across all workspaces after every agent session completes, to catch any broken build before the next task starts",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run build",
+    "timeout": 120
+  }
+}

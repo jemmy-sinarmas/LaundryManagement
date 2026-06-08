@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Migration Edit Guard",
+  "description": "Warns when a migration SQL file is edited — guards against modifying already-run migrations, which is a hard rule in AGENTS.md",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "apps/api/migrations/*.sql"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A migration file was just edited. Check if this file has already been run (i.e., it exists in the aidlc-state.md COMPLETE units or audit.md). If it has been run, STOP and warn the user: 'AGENTS.md rule — never modify already-run migrations. Create a new numbered migration file instead (next number after the highest existing one in apps/api/migrations/).'. If it appears to be a new file being created for the first time, proceed normally."
+  }
+}

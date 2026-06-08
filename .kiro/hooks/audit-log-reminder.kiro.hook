@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Audit Log Reminder",
+  "description": "Reminds the agent to append a completion entry to aidlc-docs/audit.md after finishing a significant task",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check aidlc-docs/audit.md. If you made any significant changes in this session (created/modified files, ran migrations, used the AWS MCP, changed schema, etc.) and have NOT yet logged them, append a new row now in the format: | YYYY-MM-DD | Agent | [action] | [detail] |. If nothing significant happened (e.g. only read files), skip this."
+  }
+}
