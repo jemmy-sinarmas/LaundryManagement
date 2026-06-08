@@ -13,7 +13,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "npm run lint",
+    "command": "pnpm run lint",
     "timeout": 60
   }
 }

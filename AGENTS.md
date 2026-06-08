@@ -261,27 +261,27 @@ Never commit `.env`. Use `.env.example` as template.
 
 ```bash
 # Install
-npm install                     # root (workspaces)
+pnpm install                    # root (workspaces)
 
 # Database
-npm run migrate                 # run pending migrations (apps/api/)
-npm run seed                    # insert sample data
-npm run db:reset                # drop + recreate + migrate + seed (DEV ONLY)
+pnpm --filter @laundry-palu/api run migrate   # run pending migrations
+pnpm --filter @laundry-palu/api run seed      # insert sample data
+pnpm --filter @laundry-palu/api run db:reset  # drop + recreate + migrate + seed (DEV ONLY)
 
 # Development
-npm run dev                     # web :3000 + api :4000 concurrently
+pnpm run dev                    # web :3000 + api :4000 concurrently
 
 # Test & Verify
-npm run test                    # all tests
-npm run test:watch              # watch mode
-npm run typecheck               # tsc --noEmit both apps
+pnpm run test                   # all tests
+pnpm run test:watch             # watch mode
+pnpm run typecheck              # tsc --noEmit both apps
 
 # Build
-npm run build                   # production build
+pnpm run build                  # production build
 
 # Lint
-npm run lint
-npm run lint:fix
+pnpm run lint
+pnpm run lint:fix
 ```
 
 ---

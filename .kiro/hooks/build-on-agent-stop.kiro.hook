@@ -8,7 +8,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "npm run build",
+    "command": "pnpm run build",
     "timeout": 120
   }
 }

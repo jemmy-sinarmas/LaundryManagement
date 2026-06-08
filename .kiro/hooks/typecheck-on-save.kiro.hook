@@ -13,7 +13,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "npm run typecheck",
+    "command": "pnpm run typecheck",
     "timeout": 60
   }
 }

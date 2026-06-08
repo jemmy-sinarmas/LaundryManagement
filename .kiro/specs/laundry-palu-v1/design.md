@@ -226,10 +226,10 @@ Test count at v1.0 completion: **65 passing** (api unit + integration).
 ```bash
 # 1. Set env vars in /etc/environment or .env
 # 2. Pull latest, build
-git pull && npm install && npm run build
+git pull && pnpm install && pnpm run build
 
 # 3. Run pending migrations
-cd apps/api && npm run migrate
+pnpm --filter @laundry-palu/api run migrate
 
 # 4. Restart via PM2
 pm2 reload ecosystem.config.cjs

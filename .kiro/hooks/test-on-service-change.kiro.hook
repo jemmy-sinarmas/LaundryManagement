@@ -12,7 +12,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "cd apps/api && npm run test -- --run",
+    "command": "pnpm --filter @laundry-palu/api run test",
     "timeout": 120
   }
 }
