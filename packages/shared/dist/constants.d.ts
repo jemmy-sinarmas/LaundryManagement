@@ -14,4 +14,5 @@ export declare const PERIODIK_DISCOUNT_PERCENT = 10;
 export declare const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 export declare const PAKET_KG_OPTIONS: readonly [50, 100, 200];
 export declare const PERIODIK_DURATION_OPTIONS: readonly [3, 6, 12];
+export declare function getPreviousStatus(status: OrderStatus): OrderStatus | null;
 //# sourceMappingURL=constants.d.ts.map

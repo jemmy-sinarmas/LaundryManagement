@@ -31,7 +31,8 @@ export async function listUsers(db: SqlDb): Promise<User[]> {
 
 export async function createUser(db: SqlDb, data: CreateUserInput): Promise<User> {
   const passwordHash = await bcrypt.hash(data.password, 12);
-  const user = await userRepo.create(db, { id: randomUUID(), ...data, passwordHash });
+  const branchId = data.role === 'admin' ? null : (data.branchId ?? null);
+  const user = await userRepo.create(db, { id: randomUUID(), ...data, passwordHash, branchId });
   return stripPassword(user);
 }
 

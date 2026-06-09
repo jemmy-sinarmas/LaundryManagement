@@ -33,6 +33,14 @@ Last updated: 2026-06-06
 | 14 | reports-dashboard-ui | COMPLETE | Dashboard (3 KPI cards + status badges + revenue bar chart + top-5 + low-stock); daily report (orders table + totals + print); monthly (bar+pie charts + new/returning); income statement (P&L rows + print); Recharts; build clean 16 routes |
 | 15 | tracking-page | COMPLETE | Public search page (invoice/phone toggle); detail page (status stepper, "Siap Diambil" banner, timeline, items, 404 card, bilingual toggle); no auth required; build clean 17 routes |
 | 16 | pwa-production | COMPLETE | @ducanh2912/next-pwa; sw.js generated; manifest.json + SVG icons; offline.html fallback; Dockerfile.api + Dockerfile.web; docker-compose.yml (postgres+api+web); build clean 17 routes |
+| 17 | branches-db-api | COMPLETE | branches table migration (007); branch.repo/service/routes/schema; Branch type in shared; User.branchId added; 65/65 tests pass; tsc clean both apps |
+| 18 | branch-user-assignment | COMPLETE | 008_user_branch.sql; JWT+auth plugin gets branchId; user schema kasir-requires-branch validation; user.repo INSERT includes branch_id; login JWT signed with branchId; authStore + login page updated; users page has branch selector for kasir; 65/65 tests pass; tsc clean both apps |
+| 19 | branch-items | COMPLETE | 009_item_branch.sql; Item.branchId in shared; item.repo findAll accepts branchId filter; item.schema branchId required on create; routes auto-inject branchId for kasir; items page branch filter + branch selector on create; useItems accepts options object; 65/65 tests pass; tsc clean both apps |
+| 20 | branch-inventory | COMPLETE | 010_inventory_branch.sql; InventoryItem.branchId; inventory.repo/service/routes updated; useInventory accepts branchId; inventory page branch filter + create selector; report.repo InventorySnapshotRow gets branch_id; 65/65 tests |
+| 21 | branch-orders-pos | COMPLETE | 011_order_branch.sql (branch_id + pickup_token); Order type updated; invoice.ts generates INV-[KODE]-YYYYMMDD-NNNN; order.repo/service/routes updated; pickup/:token GET+PATCH endpoints; PrintableInvoice QR encodes /pickup/[token]; 65/65 tests |
+| 22 | branch-expenses | COMPLETE | 012_expense_branch.sql; Expense.branchId in shared; expense.repo/service/routes updated with branchId scoping; 65/65 tests |
+| 23 | branch-reports-ui | COMPLETE | All 8 report.repo query functions updated with optional branchId; report.service threads branchId; routes/reports accept ?branch_id=; branches/page.tsx CRUD; Sidebar Cabang link; 65/65 tests |
+| 24 | pickup-qr-validation | COMPLETE | (kasir)/pickup/[token]/page.tsx — 3 states (not-ready/ready/done); validates via PATCH /pickup/:token/complete; contingency link to orders page; 65/65 tests |
 
 ---
 
@@ -50,7 +58,7 @@ Last updated: 2026-06-06
 | Money rule | `BIGINT` whole IDR in DB; `Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR'})` in UI |
 | Soft-delete rule | `is_active=false` only; never hard-delete customers/items/inventory |
 | Order lifecycle | `diterima→dicuci→dikeringkan→dibungkus→siap_diambil→selesai` (forward-only, no skipping) |
-| Invoice format | `INV-YYYYMMDD-NNNN` (server-side daily sequence) |
+| Invoice format | `INV-[KODE]-YYYYMMDD-NNNN` (per-branch daily sequence, v1.1) |
 | Membership discount | Periodik active = 10% discount; Paket Kg = deduct `sisa_kg`, no price discount |
 | Public route | `/track/*` requires NO auth — excluded from middleware |
 | FIFO formula | `floor(((currentQty * currentAvg) + (inQty * inPrice)) / (currentQty + inQty))` |

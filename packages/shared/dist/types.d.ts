@@ -1,10 +1,20 @@
 import type { ExpenseLevel, InventoryTransactionType, ItemType, MembershipType, OrderStatus, UserRole } from './constants.js';
+export interface Branch {
+    id: string;
+    nama: string;
+    kode: string;
+    alamat: string | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
 export interface User {
     id: string;
     nama: string;
     username: string;
     role: UserRole;
     isActive: boolean;
+    branchId: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -13,8 +23,16 @@ export interface Customer {
     nama: string;
     alamat: string | null;
     noHp: string;
+    countryCode: string;
     createdAt: string;
     updatedAt: string;
+}
+export interface AppSettings {
+    businessName: string;
+    businessAddress: string;
+    businessPhone: string;
+    invoiceFooter: string;
+    logoBase64: string;
 }
 interface MembershipBase {
     id: string;
@@ -46,6 +64,7 @@ export interface Item {
     tipe: ItemType;
     harga: number;
     isActive: boolean;
+    branchId: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -65,6 +84,7 @@ export interface OrderStatusHistory {
     status: OrderStatus;
     changedBy: string | null;
     changedAt: string;
+    catatan: string | null;
 }
 export interface Order {
     id: string;
@@ -77,6 +97,8 @@ export interface Order {
     total: number;
     status: OrderStatus;
     catatan: string | null;
+    branchId: string | null;
+    pickupToken: string | null;
     createdBy: string | null;
     createdAt: string;
     updatedAt: string;
@@ -98,6 +120,7 @@ export interface Expense {
     deskripsi: string | null;
     inventoryItemId: string | null;
     qtyUsed: number | null;
+    branchId: string | null;
     createdBy: string | null;
     createdAt: string;
     category?: Pick<ExpenseCategory, 'id' | 'nama' | 'level'>;
@@ -110,6 +133,7 @@ export interface InventoryItem {
     hargaRataFifo: number;
     stokMinimum: number;
     isActive: boolean;
+    branchId: string | null;
     createdAt: string;
     updatedAt: string;
     isLowStock?: boolean;
@@ -121,6 +145,7 @@ export interface InventoryTransaction {
     qty: number;
     hargaPerUnit: number | null;
     referensi: string | null;
+    fotoReferensi: string | null;
     createdBy: string | null;
     createdAt: string;
 }

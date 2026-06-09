@@ -10,7 +10,11 @@ export const CreateUserSchema = z.object({
   username: z.string().min(3).max(50),
   password: z.string().min(6),
   role: z.enum(['admin', 'kasir']),
-});
+  branchId: z.string().uuid().nullable().optional(),
+}).refine(
+  (data) => data.role !== 'kasir' || (data.branchId != null && data.branchId !== ''),
+  { message: 'Kasir harus memiliki cabang', path: ['branchId'] }
+);
 
 export const UpdateUserSchema = z.object({
   nama: z.string().min(1).max(100).optional(),

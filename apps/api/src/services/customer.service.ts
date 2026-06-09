@@ -28,6 +28,7 @@ export async function createCustomer(db: SqlDb, data: CreateCustomerInput): Prom
     nama: data.nama,
     alamat: data.alamat ?? null,
     noHp: data.noHp,
+    countryCode: data.countryCode ?? '+62',
   });
 }
 

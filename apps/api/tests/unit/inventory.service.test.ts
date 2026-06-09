@@ -140,7 +140,7 @@ describe('getLowStockItems', () => {
 
     const result = await getLowStockItems(mockDb);
 
-    expect(vi.mocked(inventoryRepo.findLowStock)).toHaveBeenCalledWith(mockDb);
+    expect(vi.mocked(inventoryRepo.findLowStock)).toHaveBeenCalledWith(mockDb, undefined);
     expect(result).toHaveLength(1);
     expect(result[0]?.isLowStock).toBe(true);
   });

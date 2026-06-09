@@ -14,6 +14,8 @@ import expenseCategoryRoutes from './routes/expense-categories/index.js';
 import expenseRoutes from './routes/expenses/index.js';
 import inventoryRoutes from './routes/inventory/index.js';
 import reportRoutes from './routes/reports/index.js';
+import settingsRoutes from './routes/settings/index.js';
+import branchRoutes from './routes/branches/index.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -46,6 +48,8 @@ await fastify.register(expenseCategoryRoutes, { prefix: '/api/v1/expense-categor
 await fastify.register(expenseRoutes,         { prefix: '/api/v1/expenses' });
 await fastify.register(inventoryRoutes,       { prefix: '/api/v1/inventory' });
 await fastify.register(reportRoutes,          { prefix: '/api/v1/reports' });
+await fastify.register(settingsRoutes,        { prefix: '/api/v1/settings' });
+await fastify.register(branchRoutes,          { prefix: '/api/v1/branches' });
 
 fastify.get('/health', async () => ({ status: 'ok' }));
 

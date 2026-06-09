@@ -2,7 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import type { Item } from '@laundry-palu/shared';
 
-export function useItems(includeInactive = false) {
+type UseItemsOptions = boolean | { includeInactive?: boolean; branchId?: string | null };
+
+export function useItems(options: UseItemsOptions = false) {
+  const includeInactive = typeof options === 'boolean' ? options : (options.includeInactive ?? false);
+  const branchId = typeof options === 'boolean' ? null : (options.branchId ?? null);
+
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,19 +16,22 @@ export function useItems(includeInactive = false) {
     try {
       setLoading(true);
       setError(null);
-      const params = includeInactive ? '?include_inactive=true' : '';
-      const data = await api.get<Item[]>(`/api/v1/items${params}`);
+      const params = new URLSearchParams();
+      if (includeInactive) params.set('include_inactive', 'true');
+      if (branchId) params.set('branch_id', branchId);
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const data = await api.get<Item[]>(`/api/v1/items${qs}`);
       setItems(data);
     } catch {
       setError('Gagal memuat daftar layanan');
     } finally {
       setLoading(false);
     }
-  }, [includeInactive]);
+  }, [includeInactive, branchId]);
 
   useEffect(() => { void fetchItems(); }, [fetchItems]);
 
-  async function createItem(data: { nama: string; tipe: string; harga: number }): Promise<Item> {
+  async function createItem(data: { nama: string; tipe: string; harga: number; branchId?: string }): Promise<Item> {
     const item = await api.post<Item>('/api/v1/items', data);
     setItems((prev) => [...prev, item]);
     return item;

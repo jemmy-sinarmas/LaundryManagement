@@ -42,7 +42,13 @@ export default function CustomerDetailPage() {
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="text-gray-500">No. HP</dt>
-            <dd className="font-medium text-gray-900">{customer.noHp}</dd>
+            <dd className="font-medium text-gray-900">
+              {customer.countryCode} {customer.noHp}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Kode Negara</dt>
+            <dd className="font-medium text-gray-900">{customer.countryCode}</dd>
           </div>
           <div>
             <dt className="text-gray-500">Alamat</dt>

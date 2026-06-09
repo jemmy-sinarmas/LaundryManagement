@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCustomers } from '@/hooks/useCustomers';
+import { COUNTRY_CODES } from '@laundry-palu/shared';
 
-type CreateForm = { nama: string; noHp: string; alamat: string };
-const EMPTY_FORM: CreateForm = { nama: '', noHp: '', alamat: '' };
+type CreateForm = { nama: string; countryCode: string; noHp: string; alamat: string };
+const EMPTY_FORM: CreateForm = { nama: '', countryCode: '+62', noHp: '', alamat: '' };
 
 export default function CustomersPage() {
   const { customers, loading, error, query, setQuery, createCustomer } = useCustomers();
@@ -22,6 +23,7 @@ export default function CustomersPage() {
         nama: form.nama,
         noHp: form.noHp,
         alamat: form.alamat || undefined,
+        countryCode: form.countryCode,
       });
       setShowDialog(false);
       setForm(EMPTY_FORM);
@@ -64,7 +66,7 @@ export default function CustomersPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Nama', 'No. HP', 'Alamat', ''].map((h, i) => (
+              {['Nama', 'No. HP', 'Kode Negara', 'Alamat', ''].map((h, i) => (
                 <th
                   key={i}
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
@@ -77,13 +79,13 @@ export default function CustomersPage() {
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-400">
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">
                   Memuat...
                 </td>
               </tr>
             ) : customers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-400">
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">
                   {query ? 'Tidak ada hasil untuk pencarian ini.' : 'Belum ada pelanggan.'}
                 </td>
               </tr>
@@ -92,6 +94,7 @@ export default function CustomersPage() {
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{c.nama}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{c.noHp}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{c.countryCode}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{c.alamat ?? '—'}</td>
                   <td className="px-6 py-4 text-right">
                     <Link
@@ -133,14 +136,27 @@ export default function CustomersPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">No. HP</label>
-                <input
-                  type="tel"
-                  value={form.noHp}
-                  onChange={(e) => setForm({ ...form, noHp: e.target.value })}
-                  required
-                  placeholder="08xxxxxxxxxx"
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={form.countryCode}
+                    onChange={(e) => setForm({ ...form, countryCode: e.target.value })}
+                    className="rounded border border-gray-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    value={form.noHp}
+                    onChange={(e) => setForm({ ...form, noHp: e.target.value })}
+                    required
+                    placeholder="08xxxxxxxxxx"
+                    className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">

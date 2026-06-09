@@ -5,6 +5,27 @@
 -- ============================================================
 
 -- ─────────────────────────────────────────────
+-- BRANCHES (v1.1)
+-- ─────────────────────────────────────────────
+CREATE TABLE branches (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nama       VARCHAR(100) NOT NULL,
+  kode       VARCHAR(10) UNIQUE NOT NULL,   -- short code e.g. PLW, PLT
+  alamat     TEXT,
+  is_active  BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- v1.1 columns added via migrations (not reflected here until migrated):
+--   users.branch_id          UUID REFERENCES branches(id)  -- nullable; NULL = super-admin
+--   items.branch_id          UUID NOT NULL REFERENCES branches(id)
+--   orders.branch_id         UUID NOT NULL REFERENCES branches(id)
+--   orders.pickup_token      UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE
+--   inventory_items.branch_id UUID NOT NULL REFERENCES branches(id)
+--   expenses.branch_id       UUID NOT NULL REFERENCES branches(id)
+-- Invoice format changed to INV-[KODE]-YYYYMMDD-NNNN (per-branch daily sequence)
+
+-- ─────────────────────────────────────────────
 -- USERS
 -- ─────────────────────────────────────────────
 CREATE TABLE users (

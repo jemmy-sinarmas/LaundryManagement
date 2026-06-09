@@ -6,6 +6,7 @@ import { calculateFifoAverage } from '../utils/fifo.js';
 import type {
   CreateInventoryItemInput,
   UpdateInventoryItemInput,
+  BulkPurchaseInput,
 } from '../schemas/inventory.schema.js';
 
 function makeError(message: string, statusCode: number): Error & { statusCode: number } {
@@ -29,9 +30,9 @@ export async function getInventoryItem(db: SqlDb, id: string): Promise<Inventory
 
 export async function listInventoryItems(
   db: SqlDb,
-  includeInactive?: boolean
+  options: { includeInactive?: boolean; branchId?: string | null } = {}
 ): Promise<InventoryItem[]> {
-  return inventoryRepo.findAll(db, includeInactive);
+  return inventoryRepo.findAll(db, options);
 }
 
 export async function updateInventoryItem(
@@ -44,8 +45,8 @@ export async function updateInventoryItem(
   return item;
 }
 
-export async function getLowStockItems(db: SqlDb): Promise<InventoryItem[]> {
-  return inventoryRepo.findLowStock(db);
+export async function getLowStockItems(db: SqlDb, branchId?: string | null): Promise<InventoryItem[]> {
+  return inventoryRepo.findLowStock(db, branchId);
 }
 
 export async function recordPurchase(
@@ -54,7 +55,8 @@ export async function recordPurchase(
   qty: number,
   hargaPerUnit: number,
   referensi: string | null,
-  createdBy: string | null
+  createdBy: string | null,
+  fotoReferensi?: string | null
 ): Promise<InventoryTransaction> {
   const item = await inventoryRepo.findById(db, itemId);
   if (!item) throw makeError('Inventory item not found', 404);
@@ -71,7 +73,31 @@ export async function recordPurchase(
     qty,
     hargaPerUnit,
     referensi,
+    fotoReferensi: fotoReferensi ?? null,
     createdBy,
+  });
+}
+
+export async function bulkPurchase(
+  db: SqlDb,
+  data: BulkPurchaseInput,
+  createdBy: string | null
+): Promise<InventoryTransaction[]> {
+  return db.begin(async (tx) => {
+    const results: InventoryTransaction[] = [];
+    for (const item of data.items) {
+      const tx_ = await recordPurchase(
+        tx,
+        item.itemId,
+        item.qty,
+        item.hargaPerUnit,
+        item.referensi ?? null,
+        createdBy,
+        data.fotoReferensi ?? null
+      );
+      results.push(tx_);
+    }
+    return results;
   });
 }
 

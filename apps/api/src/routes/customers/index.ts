@@ -12,7 +12,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
     reply.send(customers);
   });
 
-  fastify.post('/', adminOnly, async (req, reply) => {
+  fastify.post('/', authOnly, async (req, reply) => {
     const result = CreateCustomerSchema.safeParse(req.body);
     if (!result.success) {
       return reply.code(400).send({ error: 'Validation error', details: result.error.flatten() });

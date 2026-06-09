@@ -9,6 +9,7 @@ type InventoryItemRow = {
   harga_rata_fifo: number | bigint;
   stok_minimum: number | string;
   is_active: boolean | number;
+  branch_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -20,6 +21,7 @@ type TransactionRow = {
   qty: number | string;
   harga_per_unit: number | bigint | null;
   referensi: string | null;
+  foto_referensi: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -33,6 +35,7 @@ function mapInventoryItem(row: InventoryItemRow, isLowStock = false): InventoryI
     hargaRataFifo: Number(row.harga_rata_fifo),
     stokMinimum: Number(row.stok_minimum),
     isActive: Boolean(row.is_active),
+    branchId: row.branch_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     isLowStock,
@@ -47,6 +50,7 @@ function mapTransaction(row: TransactionRow): InventoryTransaction {
     qty: Number(row.qty),
     hargaPerUnit: row.harga_per_unit !== null ? Number(row.harga_per_unit) : null,
     referensi: row.referensi,
+    fotoReferensi: row.foto_referensi ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
   };
@@ -54,12 +58,25 @@ function mapTransaction(row: TransactionRow): InventoryTransaction {
 
 export async function findAll(
   db: SqlDb,
-  includeInactive?: boolean
+  options: { includeInactive?: boolean; branchId?: string | null } = {}
 ): Promise<InventoryItem[]> {
-  if (includeInactive) {
+  const { includeInactive = false, branchId } = options;
+
+  if (branchId) {
+    if (includeInactive) {
+      const rows = await db<InventoryItemRow>`
+        SELECT * FROM inventory_items WHERE branch_id = ${branchId} ORDER BY nama
+      `;
+      return rows.map((r) => mapInventoryItem(r));
+    }
     const rows = await db<InventoryItemRow>`
-      SELECT * FROM inventory_items ORDER BY nama
+      SELECT * FROM inventory_items WHERE branch_id = ${branchId} AND is_active = true ORDER BY nama
     `;
+    return rows.map((r) => mapInventoryItem(r));
+  }
+
+  if (includeInactive) {
+    const rows = await db<InventoryItemRow>`SELECT * FROM inventory_items ORDER BY nama`;
     return rows.map((r) => mapInventoryItem(r));
   }
   const rows = await db<InventoryItemRow>`
@@ -75,7 +92,15 @@ export async function findById(db: SqlDb, id: string): Promise<InventoryItem | n
   return rows[0] ? mapInventoryItem(rows[0]) : null;
 }
 
-export async function findLowStock(db: SqlDb): Promise<InventoryItem[]> {
+export async function findLowStock(db: SqlDb, branchId?: string | null): Promise<InventoryItem[]> {
+  if (branchId) {
+    const rows = await db<InventoryItemRow>`
+      SELECT * FROM inventory_items
+      WHERE qty_saat_ini <= stok_minimum AND is_active = true AND branch_id = ${branchId}
+      ORDER BY (qty_saat_ini - stok_minimum) ASC
+    `;
+    return rows.map((r) => mapInventoryItem(r, true));
+  }
   const rows = await db<InventoryItemRow>`
     SELECT * FROM inventory_items
     WHERE qty_saat_ini <= stok_minimum AND is_active = true
@@ -86,11 +111,11 @@ export async function findLowStock(db: SqlDb): Promise<InventoryItem[]> {
 
 export async function create(
   db: SqlDb,
-  data: { id: string; nama: string; satuan: string; stokMinimum: number }
+  data: { id: string; nama: string; satuan: string; stokMinimum: number; branchId: string }
 ): Promise<InventoryItem> {
   const rows = await db<InventoryItemRow>`
-    INSERT INTO inventory_items (id, nama, satuan, stok_minimum)
-    VALUES (${data.id}, ${data.nama}, ${data.satuan}, ${data.stokMinimum})
+    INSERT INTO inventory_items (id, nama, satuan, stok_minimum, branch_id)
+    VALUES (${data.id}, ${data.nama}, ${data.satuan}, ${data.stokMinimum}, ${data.branchId})
     RETURNING *
   `;
   if (!rows[0]) throw new Error('Insert failed');
@@ -150,15 +175,16 @@ export async function createTransaction(
     qty: number;
     hargaPerUnit: number | null;
     referensi: string | null;
+    fotoReferensi?: string | null;
     createdBy: string | null;
   }
 ): Promise<InventoryTransaction> {
   const rows = await db<TransactionRow>`
     INSERT INTO inventory_transactions
-      (id, item_id, tipe, qty, harga_per_unit, referensi, created_by)
+      (id, item_id, tipe, qty, harga_per_unit, referensi, foto_referensi, created_by)
     VALUES
       (${data.id}, ${data.itemId}, ${data.tipe}, ${data.qty},
-       ${data.hargaPerUnit}, ${data.referensi}, ${data.createdBy})
+       ${data.hargaPerUnit}, ${data.referensi}, ${data.fotoReferensi ?? null}, ${data.createdBy})
     RETURNING *
   `;
   if (!rows[0]) throw new Error('Insert failed');

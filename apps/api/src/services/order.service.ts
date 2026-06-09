@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { Order, OrderStatus } from '@laundry-palu/shared';
-import { ORDER_STATUSES } from '@laundry-palu/shared';
+import { ORDER_STATUSES, getPreviousStatus } from '@laundry-palu/shared';
 import type { SqlDb } from '../lib/db-types.js';
 import * as orderRepo from '../repositories/order.repo.js';
 import * as customerRepo from '../repositories/customer.repo.js';
 import * as itemRepo from '../repositories/item.repo.js';
 import * as membershipRepo from '../repositories/membership.repo.js';
+import * as branchRepo from '../repositories/branch.repo.js';
 import { validateMembership } from './membership.service.js';
 import { generateInvoiceNo } from '../utils/invoice.js';
 import type { CreateOrderInput } from '../schemas/order.schema.js';
@@ -34,10 +35,14 @@ export function calculateOrderTotals(
 export async function createOrder(
   db: SqlDb,
   data: CreateOrderInput,
-  userId: string
+  userId: string,
+  branchId: string
 ): Promise<Order> {
   const customer = await customerRepo.findById(db, data.customerId);
   if (!customer) throw makeError('Customer not found', 404);
+
+  const branch = await branchRepo.findById(db, branchId);
+  if (!branch) throw makeError('Branch not found', 404);
 
   const fetchedItems = await Promise.all(
     data.items.map(async (i) => {
@@ -67,7 +72,7 @@ export async function createOrder(
     discountPercent
   );
 
-  const invoiceNo = await generateInvoiceNo(db);
+  const invoiceNo = await generateInvoiceNo(db, branch.kode, branchId);
 
   const order = await orderRepo.create(db, {
     id: randomUUID(),
@@ -77,6 +82,7 @@ export async function createOrder(
     diskonPersen: discountPercent,
     ...totals,
     catatan: data.catatan ?? null,
+    branchId,
     createdBy: userId,
     items: itemsWithSnapshot,
   });
@@ -97,7 +103,8 @@ export async function updateOrderStatus(
   db: SqlDb,
   orderId: string,
   newStatus: OrderStatus,
-  userId: string
+  userId: string,
+  catatan?: string
 ): Promise<Order> {
   const order = await orderRepo.findById(db, orderId);
   if (!order) throw makeError('Order not found', 404);
@@ -106,7 +113,26 @@ export async function updateOrderStatus(
     throw makeError('Transisi status tidak valid', 400);
   }
 
-  const updated = await orderRepo.updateStatus(db, orderId, newStatus, userId);
+  const updated = await orderRepo.updateStatus(db, orderId, newStatus, userId, catatan);
+  if (!updated) throw makeError('Order not found', 404);
+  return updated;
+}
+
+export async function revertOrderStatus(
+  db: SqlDb,
+  orderId: string,
+  userId: string,
+  catatan: string
+): Promise<Order> {
+  const order = await orderRepo.findById(db, orderId);
+  if (!order) throw makeError('Order not found', 404);
+
+  const previousStatus = getPreviousStatus(order.status);
+  if (!previousStatus) {
+    throw makeError('Status sudah di awal, tidak dapat dibatalkan', 400);
+  }
+
+  const updated = await orderRepo.updateStatus(db, orderId, previousStatus, userId, catatan);
   if (!updated) throw makeError('Order not found', 404);
   return updated;
 }
@@ -119,7 +145,28 @@ export async function getOrder(db: SqlDb, id: string): Promise<Order> {
 
 export async function listOrders(
   db: SqlDb,
-  opts?: { customerId?: string; status?: string }
+  opts?: { customerId?: string; status?: string; branchId?: string | null }
 ): Promise<Order[]> {
   return orderRepo.findAll(db, opts);
+}
+
+export async function validatePickup(
+  db: SqlDb,
+  token: string,
+  userId: string
+): Promise<Order> {
+  const order = await orderRepo.findByPickupToken(db, token);
+  if (!order) throw makeError('Token tidak valid', 404);
+  if (order.status === 'selesai') throw makeError('Pesanan sudah selesai', 409);
+  if (order.status !== 'siap_diambil') throw makeError('Pesanan belum siap diambil', 422);
+
+  const updated = await orderRepo.updateStatus(db, order.id, 'selesai', userId);
+  if (!updated) throw makeError('Order not found', 404);
+  return updated;
+}
+
+export async function getOrderByPickupToken(db: SqlDb, token: string): Promise<Order> {
+  const order = await orderRepo.findByPickupToken(db, token);
+  if (!order) throw makeError('Token tidak valid', 404);
+  return order;
 }

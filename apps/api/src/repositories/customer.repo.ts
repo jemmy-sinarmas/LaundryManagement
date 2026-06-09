@@ -6,6 +6,7 @@ type CustomerRow = {
   nama: string;
   alamat: string | null;
   no_hp: string;
+  country_code: string;
   created_at: string;
   updated_at: string;
 };
@@ -16,6 +17,7 @@ function mapCustomer(row: CustomerRow): Customer {
     nama: row.nama,
     alamat: row.alamat,
     noHp: row.no_hp,
+    countryCode: row.country_code ?? '+62',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -53,11 +55,12 @@ export async function findByNoHp(db: SqlDb, noHp: string): Promise<Customer | nu
 
 export async function create(
   db: SqlDb,
-  data: { id: string; nama: string; alamat?: string | null; noHp: string }
+  data: { id: string; nama: string; alamat?: string | null; noHp: string; countryCode?: string }
 ): Promise<Customer> {
+  const countryCode = data.countryCode ?? '+62';
   const rows = await db<CustomerRow>`
-    INSERT INTO customers (id, nama, alamat, no_hp)
-    VALUES (${data.id}, ${data.nama}, ${data.alamat ?? null}, ${data.noHp})
+    INSERT INTO customers (id, nama, alamat, no_hp, country_code)
+    VALUES (${data.id}, ${data.nama}, ${data.alamat ?? null}, ${data.noHp}, ${countryCode})
     RETURNING *
   `;
   if (!rows[0]) throw new Error('Insert failed');
@@ -67,7 +70,7 @@ export async function create(
 export async function update(
   db: SqlDb,
   id: string,
-  data: { nama?: string | undefined; alamat?: string | null | undefined; noHp?: string | undefined }
+  data: { nama?: string | undefined; alamat?: string | null | undefined; noHp?: string | undefined; countryCode?: string | undefined }
 ): Promise<Customer | null> {
   const existing = await findById(db, id);
   if (!existing) return null;
@@ -75,10 +78,11 @@ export async function update(
   const nama = data.nama ?? existing.nama;
   const alamat = data.alamat !== undefined ? data.alamat : existing.alamat;
   const noHp = data.noHp ?? existing.noHp;
+  const countryCode = data.countryCode ?? existing.countryCode;
 
   const rows = await db<CustomerRow>`
     UPDATE customers
-    SET nama = ${nama}, alamat = ${alamat}, no_hp = ${noHp}, updated_at = NOW()
+    SET nama = ${nama}, alamat = ${alamat}, no_hp = ${noHp}, country_code = ${countryCode}, updated_at = NOW()
     WHERE id = ${id}
     RETURNING *
   `;

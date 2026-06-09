@@ -9,6 +9,8 @@ import {
   Boxes,
   BarChart3,
   UserCog,
+  Settings,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +21,9 @@ const NAV_ITEMS = [
   { href: '/expenses',  label: 'Pengeluaran',  icon: DollarSign },
   { href: '/inventory', label: 'Inventori',    icon: Boxes },
   { href: '/reports',   label: 'Laporan',      icon: BarChart3 },
+  { href: '/branches',  label: 'Cabang',       icon: GitBranch },
   { href: '/users',     label: 'Pengguna',     icon: UserCog },
+  { href: '/settings',  label: 'Pengaturan',   icon: Settings },
 ];
 
 export default function Sidebar() {

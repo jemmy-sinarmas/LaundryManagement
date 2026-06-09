@@ -21,7 +21,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const token = fastify.jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, username: user.username, role: user.role, branchId: user.branchId },
       { expiresIn: process.env['JWT_EXPIRES_IN'] ?? '8h' }
     );
 

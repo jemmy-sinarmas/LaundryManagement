@@ -15,7 +15,8 @@ function makeError(message: string, statusCode: number): Error & { statusCode: n
 export async function createExpense(
   db: SqlDb,
   data: CreateExpenseInput,
-  userId: string
+  userId: string,
+  branchId: string
 ): Promise<Expense> {
   const category = await expenseCategoryRepo.findById(db, data.categoryId);
   if (!category) throw makeError('Expense category not found', 404);
@@ -44,13 +45,14 @@ export async function createExpense(
     deskripsi: data.deskripsi ?? null,
     inventoryItemId,
     qtyUsed,
+    branchId,
     createdBy: userId,
   });
 }
 
 export async function listExpenses(
   db: SqlDb,
-  opts?: { from?: string; to?: string; categoryId?: string }
+  opts?: { from?: string; to?: string; categoryId?: string; branchId?: string | null }
 ): Promise<Expense[]> {
   return expenseRepo.findAll(db, opts);
 }

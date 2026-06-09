@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto-Translate i18n on Save",
+  "description": "Monitors changes to the primary language file (id.json) and automatically generates translations for all configured target languages (en.json), maintaining proper context and locale-specific conventions for the Laundry Palu bilingual PWA.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "apps/web/src/i18n/id.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The primary language file `apps/web/src/i18n/id.json` was just saved. Follow the i18n skill guidance from `docs/skills/i18n/SKILL.md` and do the following:\n\n1. Read both `apps/web/src/i18n/id.json` (source) and `apps/web/src/i18n/en.json` (target).\n2. Identify any keys that are present in `id.json` but missing from `en.json`, or whose Indonesian values appear to have changed since the last sync.\n3. For each new or changed key, generate an accurate English translation that:\n   - Preserves the original meaning and tone (professional, friendly, suitable for a laundry business app).\n   - Respects locale-specific conventions (e.g. date/number formats, currency labels use IDR context).\n   - Keeps interpolation placeholders (e.g. `{{name}}`, `{count}`) exactly as-is.\n   - Matches the existing English translation style already present in `en.json`.\n4. Update `apps/web/src/i18n/en.json` with the new/updated translations only — do not remove or overwrite existing correct translations.\n5. Report a brief summary of what was added or changed."
+  }
+}

@@ -6,8 +6,8 @@ import type { UserRole } from '@laundry-palu/shared';
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { id: string; username: string; role: UserRole };
-    user: { id: string; username: string; role: UserRole };
+    payload: { id: string; username: string; role: UserRole; branchId: string | null };
+    user: { id: string; username: string; role: UserRole; branchId: string | null };
   }
 }
 
@@ -32,7 +32,7 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
     try {
       await req.jwtVerify();
     } catch {
-      reply.code(401).send({ error: 'Unauthorized' });
+      return reply.code(401).send({ error: 'Unauthorized' });
     }
   } as preHandlerHookHandler);
 
@@ -45,7 +45,7 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
         return;
       }
       if (!roles.includes(req.user.role as UserRole)) {
-        reply.code(403).send({ error: 'Forbidden' });
+        return reply.code(403).send({ error: 'Forbidden' });
       }
     } as preHandlerHookHandler;
   });

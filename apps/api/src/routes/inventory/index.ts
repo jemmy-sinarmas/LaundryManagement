@@ -3,6 +3,7 @@ import {
   CreateInventoryItemSchema,
   UpdateInventoryItemSchema,
   RecordPurchaseSchema,
+  BulkPurchaseSchema,
 } from '../../schemas/inventory.schema.js';
 import * as inventoryService from '../../services/inventory.service.js';
 
@@ -11,10 +12,11 @@ const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
   const adminOnly = { preHandler: [fastify.authorizeRoles('admin')] };
 
   fastify.get('/', authOnly, async (req, reply) => {
-    const { include_inactive } = req.query as { include_inactive?: string };
-    const includeInactive =
-      include_inactive === 'true' && req.user.role === 'admin';
-    const items = await inventoryService.listInventoryItems(fastify.db, includeInactive);
+    const { include_inactive, branch_id } = req.query as { include_inactive?: string; branch_id?: string };
+    const isAdmin = req.user.role === 'admin';
+    const includeInactive = include_inactive === 'true' && isAdmin;
+    const branchId = isAdmin ? (branch_id ?? null) : req.user.branchId;
+    const items = await inventoryService.listInventoryItems(fastify.db, { includeInactive, branchId });
     reply.send(items);
   });
 
@@ -32,9 +34,26 @@ const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  fastify.post('/bulk-purchase', adminOnly, async (req, reply) => {
+    const result = BulkPurchaseSchema.safeParse(req.body);
+    if (!result.success) {
+      return reply.code(400).send({ error: 'Validation error', details: result.error.flatten() });
+    }
+    try {
+      const transactions = await inventoryService.bulkPurchase(fastify.db, result.data, req.user.id);
+      reply.code(201).send(transactions);
+    } catch (err: unknown) {
+      const e = err as { statusCode?: number; message?: string };
+      reply.code(e.statusCode ?? 500).send({ error: e.message });
+    }
+  });
+
   // Register static /low-stock before /:id to take precedence
-  fastify.get('/low-stock', authOnly, async (_req, reply) => {
-    const items = await inventoryService.getLowStockItems(fastify.db);
+  fastify.get('/low-stock', authOnly, async (req, reply) => {
+    const { branch_id } = req.query as { branch_id?: string };
+    const isAdmin = req.user.role === 'admin';
+    const branchId = isAdmin ? (branch_id ?? null) : req.user.branchId;
+    const items = await inventoryService.getLowStockItems(fastify.db, branchId);
     reply.send(items);
   });
 

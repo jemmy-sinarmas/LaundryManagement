@@ -103,7 +103,22 @@ Diterima → Dicuci → Dikeringkan → Dibungkus → Siap Diambil → Selesai
 - On expense entry: option to link to inventory item → auto-update qty and FIFO cost
 - Low-stock alert threshold per item
 
-### 4.10 Reports & Dashboard
+### 4.10 Branch Management (v1.1)
+- CRUD for branches (Cabang)
+- Fields: Nama Cabang, Kode Cabang (short code, e.g. PLW), Alamat, Status Aktif
+- Each branch has its own item catalog, inventory stock, orders, and expenses
+- Customers are shared across all branches (global pool)
+- Each Kasir is assigned to exactly one branch — they can only see/create data for their branch
+- Admin with no branch assignment = super-admin: sees all branches, can filter by branch on all screens
+
+### 4.11 Pickup QR Validation (v1.1)
+- On order creation, generate an opaque `pickup_token` (UUID, stored on the order; never exposed in URLs as the invoice number)
+- Printed receipt QR encodes: `https://[domain]/pickup/[pickup_token]`
+- At pickup: kasir scans customer's receipt QR on their device → `/pickup/[token]` page opens → system verifies order is `siap_diambil` → kasir taps "Validate & Complete" → order advances to `selesai`
+- If order is not yet `siap_diambil`: page shows "Belum siap diambil" message; no state change
+- **Contingency (lost receipt):** kasir searches for the order on the Orders page by customer phone number or invoice number and manually advances status — no receipt required
+
+### 4.12 Reports & Dashboard
 
 **Dashboard (Admin Home):**
 - Revenue today / this week / this month (IDR)
@@ -157,7 +172,6 @@ Diterima → Dicuci → Dikeringkan → Dibungkus → Siap Diambil → Selesai
 
 - Online payment gateway integration
 - WhatsApp notification (planned v1.1)
-- Multi-branch support
 - Customer mobile app (native iOS/Android)
 - Loyalty points beyond current membership model
 
@@ -165,7 +179,7 @@ Diterima → Dicuci → Dikeringkan → Dibungkus → Siap Diambil → Selesai
 
 ## 7. Assumptions & Constraints
 
-- Single-outlet deployment; single database instance
+- Multi-branch deployment; single shared database instance (all branches share one PostgreSQL DB, filtered by branch_id)
 - Internet connectivity available but not guaranteed at POS (offline-first POS)
 - Staff literacy in Bahasa Indonesia; English option for owner review
 - Thermal printer NOT required for v1.0 (browser print to PDF/paper)

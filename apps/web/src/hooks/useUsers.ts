@@ -29,6 +29,7 @@ export function useUsers() {
     username: string;
     password: string;
     role: string;
+    branchId?: string | null;
   }): Promise<User> {
     const user = await api.post<User>('/api/v1/users', data);
     setUsers((prev) => [...prev, user]);

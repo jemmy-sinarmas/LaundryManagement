@@ -19,8 +19,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { user } = await api.post<{ user: User }>('/api/v1/auth/login', { username, password });
-      setUser({ id: user.id, nama: user.nama, role: user.role });
-      router.push('/dashboard');
+      setUser({ id: user.id, nama: user.nama, role: user.role, branchId: user.branchId ?? null });
+      router.push(user.role === 'admin' ? '/dashboard' : '/pos');
     } catch {
       setError('Username atau password salah');
     } finally {

@@ -5,12 +5,13 @@ import {
   createOrder,
   updateOrderStatus,
 } from '../../src/services/order.service.js';
-import type { OrderStatus, Customer, Item, Membership, Order } from '@laundry-palu/shared';
+import type { Branch, OrderStatus, Customer, Item, Membership, Order } from '@laundry-palu/shared';
 
 vi.mock('../../src/repositories/order.repo.js');
 vi.mock('../../src/repositories/customer.repo.js');
 vi.mock('../../src/repositories/item.repo.js');
 vi.mock('../../src/repositories/membership.repo.js');
+vi.mock('../../src/repositories/branch.repo.js');
 vi.mock('../../src/services/membership.service.js');
 vi.mock('../../src/utils/invoice.js');
 
@@ -18,6 +19,7 @@ import * as orderRepo from '../../src/repositories/order.repo.js';
 import * as customerRepo from '../../src/repositories/customer.repo.js';
 import * as itemRepo from '../../src/repositories/item.repo.js';
 import * as membershipRepo from '../../src/repositories/membership.repo.js';
+import * as branchRepo from '../../src/repositories/branch.repo.js';
 import * as membershipService from '../../src/services/membership.service.js';
 import * as invoice from '../../src/utils/invoice.js';
 
@@ -26,12 +28,24 @@ afterEach(() => {
 });
 
 const mockDb = {} as Parameters<typeof createOrder>[0];
+const MOCK_BRANCH_ID = 'branch-1';
+
+const mockBranch: Branch = {
+  id: MOCK_BRANCH_ID,
+  nama: 'Palu Barat',
+  kode: 'PLW',
+  alamat: null,
+  isActive: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+};
 
 const mockCustomer: Customer = {
   id: 'cust-1',
   nama: 'Budi',
   alamat: null,
   noHp: '08123456789',
+  countryCode: '+62',
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
 };
@@ -42,13 +56,14 @@ const mockItem: Item = {
   tipe: 'kiloan',
   harga: 6000,
   isActive: true,
+  branchId: MOCK_BRANCH_ID,
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
 };
 
 const mockOrder: Order = {
   id: 'order-1',
-  invoiceNo: 'INV-20260606-0001',
+  invoiceNo: 'INV-PLW-20260606-0001',
   customerId: 'cust-1',
   membershipId: null,
   diskonPersen: 0,
@@ -57,6 +72,8 @@ const mockOrder: Order = {
   total: 18000,
   status: 'diterima',
   catatan: null,
+  branchId: MOCK_BRANCH_ID,
+  pickupToken: 'some-uuid-token',
   createdBy: 'user-1',
   createdAt: '2026-06-06T00:00:00Z',
   updatedAt: '2026-06-06T00:00:00Z',
@@ -126,9 +143,10 @@ describe('calculateOrderTotals', () => {
 
 describe('createOrder', () => {
   beforeEach(() => {
-    vi.mocked(invoice.generateInvoiceNo).mockResolvedValue('INV-20260606-0001');
+    vi.mocked(invoice.generateInvoiceNo).mockResolvedValue('INV-PLW-20260606-0001');
     vi.mocked(customerRepo.findById).mockResolvedValue(mockCustomer);
     vi.mocked(itemRepo.findById).mockResolvedValue(mockItem);
+    vi.mocked(branchRepo.findById).mockResolvedValue(mockBranch);
     vi.mocked(orderRepo.create).mockResolvedValue(mockOrder);
   });
 
@@ -142,7 +160,7 @@ describe('createOrder', () => {
     });
 
     await expect(
-      createOrder(mockDb, { customerId: 'bad-id', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1')
+      createOrder(mockDb, { customerId: 'bad-id', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1', MOCK_BRANCH_ID)
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 
@@ -154,7 +172,7 @@ describe('createOrder', () => {
       warning: null,
     });
 
-    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1');
+    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1', MOCK_BRANCH_ID);
 
     const createCall = vi.mocked(orderRepo.create).mock.calls[0]?.[1];
     expect(createCall?.diskonPersen).toBe(10);
@@ -170,7 +188,7 @@ describe('createOrder', () => {
       warning: null,
     });
 
-    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1');
+    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1', MOCK_BRANCH_ID);
 
     const createCall = vi.mocked(orderRepo.create).mock.calls[0]?.[1];
     expect(createCall?.diskonPersen).toBe(0);
@@ -186,7 +204,7 @@ describe('createOrder', () => {
     });
     vi.mocked(membershipRepo.deductKg).mockResolvedValue(undefined);
 
-    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1');
+    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1', MOCK_BRANCH_ID);
 
     expect(vi.mocked(membershipRepo.deductKg)).toHaveBeenCalledWith(mockDb, 'mem-2', 3);
   });
@@ -199,7 +217,7 @@ describe('createOrder', () => {
       warning: null,
     });
 
-    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1');
+    await createOrder(mockDb, { customerId: 'cust-1', items: [{ itemId: 'item-1', qty: 3 }] }, 'user-1', MOCK_BRANCH_ID);
 
     expect(vi.mocked(membershipRepo.deductKg)).not.toHaveBeenCalled();
   });

@@ -16,7 +16,13 @@ export const CreateOrderSchema = z.object({
 
 export const UpdateStatusSchema = z.object({
   status: z.enum(ORDER_STATUSES),
+  catatan: z.string().optional(),
+});
+
+export const RevertStatusSchema = z.object({
+  catatan: z.string().min(1, 'Catatan wajib diisi untuk membatalkan status'),
 });
 
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export type UpdateStatusInput = z.infer<typeof UpdateStatusSchema>;
+export type RevertStatusInput = z.infer<typeof RevertStatusSchema>;

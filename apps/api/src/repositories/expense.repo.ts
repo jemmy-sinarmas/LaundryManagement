@@ -9,6 +9,7 @@ type ExpenseRow = {
   deskripsi: string | null;
   inventory_item_id: string | null;
   qty_used: number | string | null;
+  branch_id: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -28,6 +29,7 @@ function mapRow(row: ExpenseRow): Expense {
     deskripsi: row.deskripsi,
     inventoryItemId: row.inventory_item_id,
     qtyUsed: row.qty_used !== null ? Number(row.qty_used) : null,
+    branchId: row.branch_id ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
   };
@@ -47,16 +49,58 @@ function mapJoinRow(row: ExpenseJoinRow): Expense {
 
 export async function findAll(
   db: SqlDb,
-  opts?: { from?: string; to?: string; categoryId?: string }
+  opts?: { from?: string; to?: string; categoryId?: string; branchId?: string | null }
 ): Promise<Expense[]> {
-  const from = opts?.from;
-  const to = opts?.to;
-  const categoryId = opts?.categoryId;
+  const { from, to, categoryId, branchId } = opts ?? {};
+
+  if (branchId) {
+    if (from && to && categoryId) {
+      const rows = await db<ExpenseRow>`
+        SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
+               inventory_item_id, qty_used, branch_id, created_by, created_at
+        FROM expenses
+        WHERE branch_id = ${branchId}
+          AND tanggal >= ${from}::date AND tanggal <= ${to}::date
+          AND category_id = ${categoryId}
+        ORDER BY tanggal DESC, created_at DESC
+      `;
+      return rows.map(mapRow);
+    }
+    if (from && to) {
+      const rows = await db<ExpenseRow>`
+        SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
+               inventory_item_id, qty_used, branch_id, created_by, created_at
+        FROM expenses
+        WHERE branch_id = ${branchId}
+          AND tanggal >= ${from}::date AND tanggal <= ${to}::date
+        ORDER BY tanggal DESC, created_at DESC
+      `;
+      return rows.map(mapRow);
+    }
+    if (categoryId) {
+      const rows = await db<ExpenseRow>`
+        SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
+               inventory_item_id, qty_used, branch_id, created_by, created_at
+        FROM expenses
+        WHERE branch_id = ${branchId} AND category_id = ${categoryId}
+        ORDER BY tanggal DESC, created_at DESC
+      `;
+      return rows.map(mapRow);
+    }
+    const rows = await db<ExpenseRow>`
+      SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
+             inventory_item_id, qty_used, branch_id, created_by, created_at
+      FROM expenses
+      WHERE branch_id = ${branchId}
+      ORDER BY tanggal DESC, created_at DESC
+    `;
+    return rows.map(mapRow);
+  }
 
   if (from && to && categoryId) {
     const rows = await db<ExpenseRow>`
       SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
-             inventory_item_id, qty_used, created_by, created_at
+             inventory_item_id, qty_used, branch_id, created_by, created_at
       FROM expenses
       WHERE tanggal >= ${from}::date AND tanggal <= ${to}::date
         AND category_id = ${categoryId}
@@ -67,7 +111,7 @@ export async function findAll(
   if (from && to) {
     const rows = await db<ExpenseRow>`
       SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
-             inventory_item_id, qty_used, created_by, created_at
+             inventory_item_id, qty_used, branch_id, created_by, created_at
       FROM expenses
       WHERE tanggal >= ${from}::date AND tanggal <= ${to}::date
       ORDER BY tanggal DESC, created_at DESC
@@ -77,7 +121,7 @@ export async function findAll(
   if (categoryId) {
     const rows = await db<ExpenseRow>`
       SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
-             inventory_item_id, qty_used, created_by, created_at
+             inventory_item_id, qty_used, branch_id, created_by, created_at
       FROM expenses
       WHERE category_id = ${categoryId}
       ORDER BY tanggal DESC, created_at DESC
@@ -86,7 +130,7 @@ export async function findAll(
   }
   const rows = await db<ExpenseRow>`
     SELECT id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
-           inventory_item_id, qty_used, created_by, created_at
+           inventory_item_id, qty_used, branch_id, created_by, created_at
     FROM expenses
     ORDER BY tanggal DESC, created_at DESC
   `;
@@ -103,6 +147,7 @@ export async function findById(db: SqlDb, id: string): Promise<Expense | null> {
       e.deskripsi,
       e.inventory_item_id,
       e.qty_used,
+      e.branch_id,
       e.created_by,
       e.created_at,
       ec.id   AS cat_id,
@@ -126,17 +171,18 @@ export async function create(
     deskripsi: string | null;
     inventoryItemId: string | null;
     qtyUsed: number | null;
+    branchId: string;
     createdBy: string | null;
   }
 ): Promise<Expense> {
   const rows = await db<ExpenseRow>`
     INSERT INTO expenses
-      (id, tanggal, jumlah, category_id, deskripsi, inventory_item_id, qty_used, created_by)
+      (id, tanggal, jumlah, category_id, deskripsi, inventory_item_id, qty_used, branch_id, created_by)
     VALUES
       (${data.id}, ${data.tanggal}::date, ${data.jumlah}, ${data.categoryId},
-       ${data.deskripsi}, ${data.inventoryItemId}, ${data.qtyUsed}, ${data.createdBy})
+       ${data.deskripsi}, ${data.inventoryItemId}, ${data.qtyUsed}, ${data.branchId}, ${data.createdBy})
     RETURNING id, tanggal::text AS tanggal, jumlah, category_id, deskripsi,
-              inventory_item_id, qty_used, created_by, created_at
+              inventory_item_id, qty_used, branch_id, created_by, created_at
   `;
   if (!rows[0]) throw new Error('Insert failed');
   return mapRow(rows[0]);

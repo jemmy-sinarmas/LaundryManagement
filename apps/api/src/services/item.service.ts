@@ -10,8 +10,11 @@ function makeError(message: string, statusCode: number): Error & { statusCode: n
   return err;
 }
 
-export async function listItems(db: SqlDb, includeInactive = false): Promise<Item[]> {
-  return itemRepo.findAll(db, includeInactive);
+export async function listItems(
+  db: SqlDb,
+  options: { includeInactive?: boolean; branchId?: string | null } = {}
+): Promise<Item[]> {
+  return itemRepo.findAll(db, options);
 }
 
 export async function getItem(db: SqlDb, id: string): Promise<Item> {
@@ -23,6 +26,7 @@ export async function getItem(db: SqlDb, id: string): Promise<Item> {
 export async function createItem(db: SqlDb, data: CreateItemInput): Promise<Item> {
   return itemRepo.create(db, { id: randomUUID(), ...data });
 }
+
 
 export async function updateItem(db: SqlDb, id: string, data: UpdateItemInput): Promise<Item> {
   const item = await itemRepo.update(db, id, data);

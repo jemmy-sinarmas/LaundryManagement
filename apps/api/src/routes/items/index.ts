@@ -7,9 +7,12 @@ const itemRoutes: FastifyPluginAsync = async (fastify) => {
   const adminOnly = { preHandler: [fastify.authorizeRoles('admin')] };
 
   fastify.get('/', authOnly, async (req, reply) => {
-    const { include_inactive } = req.query as { include_inactive?: string };
-    const includeInactive = include_inactive === 'true' && req.user.role === 'admin';
-    const items = await itemService.listItems(fastify.db, includeInactive);
+    const { include_inactive, branch_id } = req.query as { include_inactive?: string; branch_id?: string };
+    const isAdmin = req.user.role === 'admin';
+    const includeInactive = include_inactive === 'true' && isAdmin;
+    // Kasir: auto-filter to own branch. Admin: use query param or show all.
+    const branchId = isAdmin ? (branch_id ?? null) : req.user.branchId;
+    const items = await itemService.listItems(fastify.db, { includeInactive, branchId });
     reply.send(items);
   });
 

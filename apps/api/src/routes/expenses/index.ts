@@ -6,12 +6,15 @@ const expenseRoutes: FastifyPluginAsync = async (fastify) => {
   const authOnly = { preHandler: [fastify.authenticate] };
 
   fastify.get('/', authOnly, async (req, reply) => {
-    const { from, to, category_id } = req.query as {
+    const { from, to, category_id, branch_id } = req.query as {
       from?: string;
       to?: string;
       category_id?: string;
+      branch_id?: string;
     };
-    const opts: { from?: string; to?: string; categoryId?: string } = {};
+    const isAdmin = req.user.role === 'admin';
+    const branchId = isAdmin ? (branch_id ?? null) : req.user.branchId;
+    const opts: { from?: string; to?: string; categoryId?: string; branchId?: string | null } = { branchId };
     if (from !== undefined) opts.from = from;
     if (to !== undefined) opts.to = to;
     if (category_id !== undefined) opts.categoryId = category_id;
@@ -24,8 +27,12 @@ const expenseRoutes: FastifyPluginAsync = async (fastify) => {
     if (!result.success) {
       return reply.code(400).send({ error: 'Validation error', details: result.error.flatten() });
     }
+    const branchId = req.user.branchId;
+    if (!branchId) {
+      return reply.code(400).send({ error: 'Super-admin harus memilih cabang sebelum mencatat pengeluaran' });
+    }
     try {
-      const expense = await expenseService.createExpense(fastify.db, result.data, req.user.id);
+      const expense = await expenseService.createExpense(fastify.db, result.data, req.user.id, branchId);
       reply.code(201).send(expense);
     } catch (err: unknown) {
       const e = err as { statusCode?: number; message?: string };

@@ -29,3 +29,8 @@ export const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 
 export const PAKET_KG_OPTIONS = [50, 100, 200] as const;
 export const PERIODIK_DURATION_OPTIONS = [3, 6, 12] as const;
+
+export function getPreviousStatus(status: OrderStatus): OrderStatus | null {
+  const idx = ORDER_STATUSES.indexOf(status);
+  return idx > 0 ? (ORDER_STATUSES[idx - 1] ?? null) : null;
+}

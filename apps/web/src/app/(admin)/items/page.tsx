@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useItems } from '@/hooks/useItems';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatIDR } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
+import { api } from '@/lib/api';
 import { ITEM_TYPES } from '@laundry-palu/shared';
-import type { Item } from '@laundry-palu/shared';
+import type { Branch, Item } from '@laundry-palu/shared';
 
 const TYPE_LABELS: Record<string, string> = {
   satuan: 'Per Satuan',
@@ -13,11 +14,12 @@ const TYPE_LABELS: Record<string, string> = {
   jasa_lain: 'Jasa Lain',
 };
 
-type CreateForm = { nama: string; tipe: string; harga: string };
-const EMPTY_FORM: CreateForm = { nama: '', tipe: 'satuan', harga: '' };
+type CreateForm = { nama: string; tipe: string; harga: string; branchId: string };
+const EMPTY_FORM: CreateForm = { nama: '', tipe: 'satuan', harga: '', branchId: '' };
 
 export default function ItemsPage() {
-  const { items, loading, error, createItem, deactivateItem, activateItem } = useItems(true);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const { items, loading, error, createItem, deactivateItem, activateItem } = useItems({ includeInactive: true, branchId: selectedBranch || null });
   const [showInactive, setShowInactive] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
@@ -25,6 +27,11 @@ export default function ItemsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<Item | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    api.get<Branch[]>('/api/v1/branches').then(setBranches).catch(() => setBranches([]));
+  }, []);
 
   const displayed = showInactive ? items : items.filter((i) => i.isActive);
 
@@ -33,7 +40,7 @@ export default function ItemsPage() {
     setFormError(null);
     setSubmitting(true);
     try {
-      await createItem({ nama: form.nama, tipe: form.tipe, harga: parseInt(form.harga, 10) });
+      await createItem({ nama: form.nama, tipe: form.tipe, harga: parseInt(form.harga, 10), branchId: form.branchId });
       setShowDialog(false);
       setForm(EMPTY_FORM);
       toast.success('Layanan berhasil ditambahkan');
@@ -64,9 +71,14 @@ export default function ItemsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Layanan</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}
+            className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+            <option value="">Semua Cabang</option>
+            {branches.map((b) => <option key={b.id} value={b.id}>{b.nama} ({b.kode})</option>)}
+          </select>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
             <input
               type="checkbox"
@@ -157,6 +169,16 @@ export default function ItemsPage() {
               <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>
             )}
             <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Cabang <span className="text-red-500">*</span></label>
+                <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} required
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                  <option value="">-- Pilih Cabang --</option>
+                  {branches.filter((b) => b.isActive).map((b) => (
+                    <option key={b.id} value={b.id}>{b.nama} ({b.kode})</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Nama Layanan</label>
                 <input type="text" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} required

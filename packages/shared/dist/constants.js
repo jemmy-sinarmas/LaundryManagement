@@ -15,4 +15,8 @@ export const PERIODIK_DISCOUNT_PERCENT = 10;
 export const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 export const PAKET_KG_OPTIONS = [50, 100, 200];
 export const PERIODIK_DURATION_OPTIONS = [3, 6, 12];
+export function getPreviousStatus(status) {
+    const idx = ORDER_STATUSES.indexOf(status);
+    return idx > 0 ? (ORDER_STATUSES[idx - 1] ?? null) : null;
+}
 //# sourceMappingURL=constants.js.map

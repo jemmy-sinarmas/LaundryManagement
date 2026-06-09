@@ -33,15 +33,15 @@ export function countNewReturningCustomers(
 
 // ---- Service orchestrators ----
 
-export async function getDashboard(db: SqlDb): Promise<DashboardData> {
+export async function getDashboard(db: SqlDb, branchId?: string | null): Promise<DashboardData> {
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = today.slice(0, 7) + '-01';
 
   const [revenue, ordersByStatus, top5Customers, lowStockItems] = await Promise.all([
-    reportRepo.getDashboardRevenue(db, today),
-    reportRepo.getOrdersByStatus(db),
-    reportRepo.getTop5Customers(db, monthStart),
-    inventoryRepo.findLowStock(db),
+    reportRepo.getDashboardRevenue(db, today, branchId),
+    reportRepo.getOrdersByStatus(db, branchId),
+    reportRepo.getTop5Customers(db, monthStart, branchId),
+    inventoryRepo.findLowStock(db, branchId),
   ]);
 
   return {
@@ -54,11 +54,11 @@ export async function getDashboard(db: SqlDb): Promise<DashboardData> {
   };
 }
 
-export async function getDailyReport(db: SqlDb, date: string): Promise<DailyReportData> {
+export async function getDailyReport(db: SqlDb, date: string, branchId?: string | null): Promise<DailyReportData> {
   const [orders, totalRevenue, totalExpenses] = await Promise.all([
-    reportRepo.getDailyOrders(db, date),
-    reportRepo.getDailyRevenue(db, date),
-    reportRepo.getDailyExpenses(db, date),
+    reportRepo.getDailyOrders(db, date, branchId),
+    reportRepo.getDailyRevenue(db, date, branchId),
+    reportRepo.getDailyExpenses(db, date, branchId),
   ]);
 
   return {
@@ -73,12 +73,13 @@ export async function getDailyReport(db: SqlDb, date: string): Promise<DailyRepo
 export async function getMonthlyReport(
   db: SqlDb,
   year: number,
-  month: number
+  month: number,
+  branchId?: string | null
 ): Promise<MonthlyReportData> {
   const [revenueByDay, revenueByItemType, customerTypeRows] = await Promise.all([
-    reportRepo.getMonthlyRevenueByDay(db, year, month),
-    reportRepo.getMonthlyRevenueByItemType(db, year, month),
-    reportRepo.getMonthlyCustomerTypes(db, year, month),
+    reportRepo.getMonthlyRevenueByDay(db, year, month, branchId),
+    reportRepo.getMonthlyRevenueByItemType(db, year, month, branchId),
+    reportRepo.getMonthlyCustomerTypes(db, year, month, branchId),
   ]);
 
   const totalRevenue = revenueByDay.reduce((s, r) => s + r.revenue, 0);
@@ -98,11 +99,12 @@ export async function getMonthlyReport(
 export async function getIncomeStatement(
   db: SqlDb,
   from: string,
-  to: string
+  to: string,
+  branchId?: string | null
 ): Promise<IncomeStatementData> {
   const [revenue, expensesByLevel] = await Promise.all([
-    reportRepo.getRevenueInRange(db, from, to),
-    reportRepo.getExpensesByLevelInRange(db, from, to),
+    reportRepo.getRevenueInRange(db, from, to, branchId),
+    reportRepo.getExpensesByLevelInRange(db, from, to, branchId),
   ]);
 
   const variableCosts = expensesByLevel.find((r) => r.level === 'variabel')?.total ?? 0;
@@ -111,9 +113,10 @@ export async function getIncomeStatement(
   return buildIncomeStatement(from, to, revenue, variableCosts, fixedCosts);
 }
 
-export async function getInventoryReport(db: SqlDb): Promise<InventoryReportData> {
+export async function getInventoryReport(db: SqlDb, branchId?: string | null): Promise<InventoryReportData> {
   const rows = await reportRepo.getInventorySnapshot(db);
-  const items = rows.map((r) => ({
+  const filtered = branchId ? rows.filter((r) => r.branchId === branchId) : rows;
+  const items = filtered.map((r) => ({
     ...r,
     isLowStock: r.qtySaatIni <= r.stokMinimum,
     stockValue: r.qtySaatIni * r.hargaRataFifo,

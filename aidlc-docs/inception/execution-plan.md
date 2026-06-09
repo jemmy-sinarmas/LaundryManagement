@@ -281,3 +281,166 @@ Batches 4–7 can be worked in parallel if needed.
 - App installable on Android Chrome ("Add to Home Screen" prompt appears)
 - Offline queue syncs orders on reconnect (verifiable in Network DevTools)
 - `docker compose up` starts postgres and both apps successfully
+
+---
+
+## v1.1 Extension — Multi-Branch + Pickup QR
+Approved: 2026-06-09
+
+Units 17–24 implement multi-branch support and encrypted pickup QR validation.
+Execute sequentially — unit 17 (branches table) must be COMPLETE before any branch_id FK migrations.
+
+---
+
+### 17 — branches-db-api
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/007_branches.sql` — CREATE TABLE branches
+- `apps/api/src/repositories/branch.repo.ts`
+- `apps/api/src/services/branch.service.ts`
+- `apps/api/src/routes/branches/index.ts`
+- `apps/api/src/schemas/branch.schema.ts`
+- `packages/shared/src/types.ts` — add `Branch` interface
+
+**Done when:**
+- `GET /api/v1/branches` returns list of branches (Admin only)
+- `POST /api/v1/branches` creates branch; duplicate `kode` returns 409
+- `PATCH /api/v1/branches/:id` updates nama/alamat/is_active
+- `tsc --noEmit` and unit tests pass
+
+---
+
+### 18 — branch-user-assignment
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/008_user_branch.sql` — ALTER TABLE users ADD COLUMN branch_id
+- `apps/api/src/plugins/auth.ts` — JWT payload includes branch_id
+- `apps/api/src/repositories/user.repo.ts` — include branch_id in queries
+- `apps/api/src/services/user.service.ts` — validate branch_id on kasir creation
+- `apps/api/src/routes/users/index.ts` — accept branch_id in create/update
+- `apps/api/src/schemas/user.schema.ts` — add branch_id field
+- `apps/web/src/app/(admin)/users/page.tsx` — branch selector in create dialog
+
+**Done when:**
+- Login as kasir returns JWT with correct `branch_id`
+- Login as admin returns JWT with `branch_id: null`
+- Creating a kasir without branch_id returns 400
+- `tsc --noEmit` passes
+
+---
+
+### 19 — branch-items
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/009_item_branch.sql` — ALTER TABLE items ADD COLUMN branch_id
+- Update `apps/api/src/repositories/item.repo.ts` — filter by branch_id
+- Update `apps/api/src/services/item.service.ts`
+- Update `apps/api/src/routes/items/index.ts`
+- Update `apps/web/src/app/(admin)/items/page.tsx`
+
+**Done when:**
+- Kasir-PLW can only see PLW items via `GET /api/v1/items`
+- Admin sees all items unless `?branch_id=` filter is applied
+- `tsc --noEmit` passes
+
+---
+
+### 20 — branch-inventory
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/010_inventory_branch.sql` — ALTER TABLE inventory_items ADD COLUMN branch_id
+- Update `apps/api/src/repositories/inventory.repo.ts`
+- Update `apps/api/src/services/inventory.service.ts`
+- Update `apps/api/src/routes/inventory/index.ts`
+- Update `apps/web/src/app/(admin)/inventory/page.tsx`
+- Update `apps/web/src/hooks/useInventory.ts`
+
+**Done when:**
+- Inventory list scoped to branch for kasir
+- Low-stock alerts scoped to branch
+- `tsc --noEmit` passes
+
+---
+
+### 21 — branch-orders-pos
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/011_order_branch.sql` — ALTER TABLE orders ADD COLUMN branch_id
+- `apps/api/src/utils/invoice.ts` — update to `generateInvoiceNo(branchKode, branchId, db)` → `INV-[KODE]-YYYYMMDD-NNNN`
+- Update `apps/api/src/repositories/order.repo.ts`
+- Update `apps/api/src/services/order.service.ts`
+- Update `apps/api/src/routes/orders/index.ts`
+- Update `apps/web/src/app/(kasir)/pos/page.tsx` — branch_id auto from JWT
+
+**Done when:**
+- POS order creation tags order with `branch_id` from JWT
+- Invoice number format is `INV-[KODE]-YYYYMMDD-NNNN`
+- Sequence is per-branch per day (two branches on same day get independent NNNN)
+- Kasir orders list shows only own-branch orders
+- `tsc --noEmit` and order service unit tests pass
+
+---
+
+### 22 — branch-expenses
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/012_expense_branch.sql` — ALTER TABLE expenses ADD COLUMN branch_id
+- Update `apps/api/src/repositories/expense.repo.ts`
+- Update `apps/api/src/services/expense.service.ts`
+- Update `apps/api/src/routes/expenses/index.ts`
+- Update `apps/web/src/app/(admin)/expenses/page.tsx`
+- Update `apps/web/src/hooks/useExpenses.ts`
+
+**Done when:**
+- Expense creation auto-assigns branch_id from JWT
+- Expense list scoped to branch for kasir
+- `tsc --noEmit` passes
+
+---
+
+### 23 — branch-reports-ui
+**Status:** PENDING
+
+**Key output files:**
+- Update `apps/api/src/repositories/report.repo.ts` — all queries accept optional branch_id param
+- Update `apps/api/src/services/report.service.ts`
+- Update `apps/api/src/routes/reports/index.ts` — accept `?branch_id=` query param
+- Update `apps/web/src/app/(admin)/dashboard/page.tsx` — branch filter dropdown
+- Update `apps/web/src/app/(admin)/reports/` pages — branch filter
+- New: `apps/web/src/app/(admin)/branches/page.tsx` — branch CRUD UI
+- Update `apps/web/src/hooks/useReports.ts`
+
+**Done when:**
+- Admin dashboard shows combined revenue across all branches by default
+- Branch filter dropdown changes all metrics to selected branch
+- Branch management page allows create / toggle active
+- `tsc --noEmit` and `next build` pass
+
+---
+
+### 24 — pickup-qr-validation
+**Status:** PENDING
+
+**Key output files:**
+- `apps/api/migrations/013_order_pickup_token.sql` — ALTER TABLE orders ADD COLUMN pickup_token UUID DEFAULT gen_random_uuid() UNIQUE
+- Update `apps/api/src/repositories/order.repo.ts` — add `getOrderByPickupToken(token)`
+- Update `apps/api/src/services/order.service.ts` — add `validatePickup(token, userId)` with `siap_diambil` guard
+- Update `apps/api/src/routes/orders/index.ts` — GET + PATCH `/pickup/:token`
+- Update `apps/api/src/utils/invoice.ts` — `buildPickupUrl(pickupToken, baseUrl)`
+- Update `apps/web/src/components/invoice/PrintableInvoice.tsx` — QR encodes `/pickup/[pickup_token]`
+- New: `apps/web/src/app/(kasir)/pickup/[token]/page.tsx`
+- i18n keys in `id.json` + `en.json`: `pickup.title`, `pickup.validate`, `pickup.success`, `pickup.not_ready`, `pickup.already_done`
+
+**Done when:**
+- Printed receipt QR encodes `/pickup/[uuid]` — not `/track/[invoiceNo]`
+- `GET /api/v1/orders/pickup/:token` returns 404 for invalid token
+- `PATCH /api/v1/orders/pickup/:token/complete` returns 400 if status is not `siap_diambil`
+- Kasir navigates to `/pickup/[token]` → correct status-gated UI renders
+- Order moves to `selesai` on confirm
+- `tsc --noEmit`, unit tests, and `next build` pass

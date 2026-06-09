@@ -3,14 +3,130 @@ import { useState } from 'react';
 import { usePOS } from '@/hooks/usePOS';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
+import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
-import { X, ShoppingCart, Wifi, WifiOff } from 'lucide-react';
+import { COUNTRY_CODES } from '@laundry-palu/shared';
+import type { Customer } from '@laundry-palu/shared';
+import { X, ShoppingCart, WifiOff, UserPlus } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
   satuan: 'Per Satuan',
   kiloan: 'Kiloan',
   jasa_lain: 'Jasa Lain',
 };
+
+type NewCustomerForm = { nama: string; countryCode: string; noHp: string; alamat: string };
+const EMPTY_NEW_CUSTOMER: NewCustomerForm = { nama: '', countryCode: '+62', noHp: '', alamat: '' };
+
+function NewCustomerModal({
+  onSubmit,
+  onClose,
+}: {
+  onSubmit: (data: NewCustomerForm) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState<NewCustomerForm>(EMPTY_NEW_CUSTOMER);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await onSubmit(form);
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Gagal menambah pelanggan');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Tambah Pelanggan Baru</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Lengkap</label>
+            <input
+              type="text"
+              value={form.nama}
+              onChange={(e) => setForm({ ...form, nama: e.target.value })}
+              required
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">No. HP</label>
+            <div className="flex gap-2">
+              <select
+                value={form.countryCode}
+                onChange={(e) => setForm({ ...form, countryCode: e.target.value })}
+                className="rounded border border-gray-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              >
+                {COUNTRY_CODES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} {c.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                value={form.noHp}
+                onChange={(e) => setForm({ ...form, noHp: e.target.value })}
+                required
+                placeholder="08xxxxxxxxxx"
+                className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Alamat <span className="text-gray-400">(opsional)</span>
+            </label>
+            <input
+              type="text"
+              value={form.alamat}
+              onChange={(e) => setForm({ ...form, alamat: e.target.value })}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Menyimpan...' : 'Simpan & Pilih'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function PosPage() {
   const {
@@ -29,6 +145,7 @@ export default function PosPage() {
   const [catatan, setCatatan] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('kiloan');
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
 
   async function handleSubmit() {
     setOrderError(null);
@@ -38,6 +155,16 @@ export default function PosPage() {
     } catch (err: unknown) {
       setOrderError(err instanceof Error ? err.message : 'Terjadi kesalahan');
     }
+  }
+
+  async function handleNewCustomer(form: NewCustomerForm) {
+    const customer = await api.post<Customer>('/api/v1/customers', {
+      nama: form.nama,
+      noHp: form.noHp,
+      alamat: form.alamat || null,
+      countryCode: form.countryCode,
+    });
+    await selectCustomer(customer);
   }
 
   const filteredItems = items.filter((i) => i.isActive && i.tipe === activeType);
@@ -71,7 +198,7 @@ export default function PosPage() {
                 )}
               </div>
               <button
-                onClick={() => { selectCustomer({ id: '', nama: '', noHp: '', alamat: null, createdAt: '', updatedAt: '' }); }}
+                onClick={() => { void selectCustomer({ id: '', nama: '', noHp: '', alamat: null, countryCode: '+62', createdAt: '', updatedAt: '' }); }}
                 className="text-gray-400 hover:text-gray-700"
               >
                 <X size={16} />
@@ -100,6 +227,13 @@ export default function PosPage() {
                   ))}
                 </div>
               )}
+              <button
+                onClick={() => setShowNewCustomer(true)}
+                className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
+              >
+                <UserPlus size={12} />
+                + Pelanggan Baru
+              </button>
             </>
           )}
         </div>
@@ -157,7 +291,7 @@ export default function PosPage() {
         </div>
 
         {/* Cart items */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-3 p-4">
           {cart.length === 0 ? (
             <p className="py-8 text-center text-sm text-gray-400">Keranjang kosong</p>
           ) : (
@@ -190,7 +324,7 @@ export default function PosPage() {
         </div>
 
         {/* Totals + submit */}
-        <div className="border-t p-4 space-y-3">
+        <div className="space-y-3 border-t p-4">
           <div className="space-y-1 text-sm">
             <div className="flex justify-between text-gray-500">
               <span>Subtotal</span>
@@ -223,7 +357,7 @@ export default function PosPage() {
           <button
             onClick={() => void handleSubmit()}
             disabled={submitting || !selectedCustomer || cart.length === 0}
-            className="w-full rounded bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Memproses...' : 'Buat Pesanan'}
           </button>
@@ -233,6 +367,14 @@ export default function PosPage() {
       {/* Invoice modal */}
       {createdOrder && (
         <PrintableInvoice order={createdOrder} onClose={clearCreatedOrder} />
+      )}
+
+      {/* New customer modal */}
+      {showNewCustomer && (
+        <NewCustomerModal
+          onSubmit={handleNewCustomer}
+          onClose={() => setShowNewCustomer(false)}
+        />
       )}
     </div>
   );

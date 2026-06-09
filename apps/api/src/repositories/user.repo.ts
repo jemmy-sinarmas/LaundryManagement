@@ -9,6 +9,7 @@ type UserRow = {
   password: string;
   role: string;
   is_active: number | boolean;
+  branch_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -21,6 +22,7 @@ function mapUser(row: UserRow): User & { password: string } {
     password: row.password,
     role: row.role as User['role'],
     isActive: Boolean(row.is_active),
+    branchId: row.branch_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -55,11 +57,12 @@ export async function findAll(db: SqlDb): Promise<(User & { password: string })[
 
 export async function create(
   db: SqlDb,
-  data: { id: string } & CreateUserInput & { passwordHash: string }
+  data: { id: string } & CreateUserInput & { passwordHash: string; branchId?: string | null }
 ): Promise<User & { password: string }> {
+  const branchId = data.branchId ?? null;
   const rows = await db<UserRow>`
-    INSERT INTO users (id, nama, username, password, role)
-    VALUES (${data.id}, ${data.nama}, ${data.username}, ${data.passwordHash}, ${data.role})
+    INSERT INTO users (id, nama, username, password, role, branch_id)
+    VALUES (${data.id}, ${data.nama}, ${data.username}, ${data.passwordHash}, ${data.role}, ${branchId})
     RETURNING *
   `;
   if (!rows[0]) throw new Error('Insert failed');

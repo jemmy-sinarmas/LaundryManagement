@@ -13,6 +13,8 @@ type OrderRow = {
   total: number | bigint;
   status: string;
   catatan: string | null;
+  branch_id: string | null;
+  pickup_token: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -35,6 +37,7 @@ type StatusHistoryRow = {
   status: string;
   changed_by: string | null;
   changed_at: string;
+  catatan: string | null;
 };
 
 type CustomerPickRow = {
@@ -63,6 +66,7 @@ function mapStatusHistory(row: StatusHistoryRow): OrderStatusHistory {
     status: row.status as OrderStatus,
     changedBy: row.changed_by,
     changedAt: row.changed_at,
+    catatan: row.catatan ?? null,
   };
 }
 
@@ -78,6 +82,8 @@ function mapOrder(row: OrderRow): Order {
     total: Number(row.total),
     status: row.status as OrderStatus,
     catatan: row.catatan,
+    branchId: row.branch_id ?? null,
+    pickupToken: row.pickup_token ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -96,6 +102,7 @@ export async function create(
     diskonAmount: number;
     total: number;
     catatan: string | null;
+    branchId: string;
     createdBy: string | null;
     items: {
       id: string;
@@ -111,11 +118,11 @@ export async function create(
   const orderRows = await db<OrderRow>`
     INSERT INTO orders
       (id, invoice_no, customer_id, membership_id, diskon_persen,
-       subtotal, diskon_amount, total, status, catatan, created_by)
+       subtotal, diskon_amount, total, status, catatan, branch_id, created_by)
     VALUES
       (${data.id}, ${data.invoiceNo}, ${data.customerId}, ${data.membershipId},
        ${data.diskonPersen}, ${data.subtotal}, ${data.diskonAmount}, ${data.total},
-       'diterima', ${data.catatan}, ${data.createdBy})
+       'diterima', ${data.catatan}, ${data.branchId}, ${data.createdBy})
     RETURNING *
   `;
   if (!orderRows[0]) throw new Error('Insert order failed');
@@ -194,25 +201,54 @@ export async function findByCustomerNoHp(db: SqlDb, noHp: string): Promise<Order
 
 export async function findAll(
   db: SqlDb,
-  opts?: { customerId?: string; status?: string }
+  opts?: { customerId?: string; status?: string; branchId?: string | null }
 ): Promise<Order[]> {
-  if (opts?.customerId && opts?.status) {
+  const branchId = opts?.branchId;
+  const customerId = opts?.customerId;
+  const status = opts?.status;
+
+  if (branchId) {
+    if (customerId && status) {
+      const rows = await db<OrderRow>`
+        SELECT * FROM orders
+        WHERE branch_id = ${branchId} AND customer_id = ${customerId} AND status = ${status}
+        ORDER BY created_at DESC
+      `;
+      return rows.map(mapOrder);
+    }
+    if (customerId) {
+      const rows = await db<OrderRow>`
+        SELECT * FROM orders WHERE branch_id = ${branchId} AND customer_id = ${customerId} ORDER BY created_at DESC
+      `;
+      return rows.map(mapOrder);
+    }
+    if (status) {
+      const rows = await db<OrderRow>`
+        SELECT * FROM orders WHERE branch_id = ${branchId} AND status = ${status} ORDER BY created_at DESC
+      `;
+      return rows.map(mapOrder);
+    }
+    const rows = await db<OrderRow>`SELECT * FROM orders WHERE branch_id = ${branchId} ORDER BY created_at DESC`;
+    return rows.map(mapOrder);
+  }
+
+  if (customerId && status) {
     const rows = await db<OrderRow>`
       SELECT * FROM orders
-      WHERE customer_id = ${opts.customerId} AND status = ${opts.status}
+      WHERE customer_id = ${customerId} AND status = ${status}
       ORDER BY created_at DESC
     `;
     return rows.map(mapOrder);
   }
-  if (opts?.customerId) {
+  if (customerId) {
     const rows = await db<OrderRow>`
-      SELECT * FROM orders WHERE customer_id = ${opts.customerId} ORDER BY created_at DESC
+      SELECT * FROM orders WHERE customer_id = ${customerId} ORDER BY created_at DESC
     `;
     return rows.map(mapOrder);
   }
-  if (opts?.status) {
+  if (status) {
     const rows = await db<OrderRow>`
-      SELECT * FROM orders WHERE status = ${opts.status} ORDER BY created_at DESC
+      SELECT * FROM orders WHERE status = ${status} ORDER BY created_at DESC
     `;
     return rows.map(mapOrder);
   }
@@ -220,11 +256,19 @@ export async function findAll(
   return rows.map(mapOrder);
 }
 
+export async function findByPickupToken(db: SqlDb, token: string): Promise<Order | null> {
+  const rows = await db<OrderRow>`
+    SELECT * FROM orders WHERE pickup_token = ${token} LIMIT 1
+  `;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
 export async function updateStatus(
   db: SqlDb,
   id: string,
   status: string,
-  changedBy: string | null
+  changedBy: string | null,
+  catatan?: string | null
 ): Promise<Order | null> {
   const rows = await db<OrderRow>`
     UPDATE orders SET status = ${status}, updated_at = NOW()
@@ -234,8 +278,8 @@ export async function updateStatus(
   if (!rows[0]) return null;
 
   await db`
-    INSERT INTO order_status_history (id, order_id, status, changed_by)
-    VALUES (${randomUUID()}, ${id}, ${status}, ${changedBy})
+    INSERT INTO order_status_history (id, order_id, status, changed_by, catatan)
+    VALUES (${randomUUID()}, ${id}, ${status}, ${changedBy}, ${catatan ?? null})
   `;
 
   return mapOrder(rows[0]);

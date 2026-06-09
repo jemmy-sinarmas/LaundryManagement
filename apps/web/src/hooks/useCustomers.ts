@@ -30,6 +30,7 @@ export function useCustomers() {
     nama: string;
     noHp: string;
     alamat?: string;
+    countryCode?: string;
   }): Promise<Customer> {
     const customer = await api.post<Customer>('/api/v1/customers', data);
     setCustomers((prev) => [customer, ...prev]);

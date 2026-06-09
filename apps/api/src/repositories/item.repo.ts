@@ -7,6 +7,7 @@ type ItemRow = {
   tipe: string;
   harga: number | bigint;
   is_active: number | boolean;
+  branch_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -18,16 +19,33 @@ function mapItem(row: ItemRow): Item {
     tipe: row.tipe as Item['tipe'],
     harga: Number(row.harga),
     isActive: Boolean(row.is_active),
+    branchId: row.branch_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-export async function findAll(db: SqlDb, includeInactive = false): Promise<Item[]> {
-  if (includeInactive) {
+export async function findAll(
+  db: SqlDb,
+  options: { includeInactive?: boolean; branchId?: string | null } = {}
+): Promise<Item[]> {
+  const { includeInactive = false, branchId } = options;
+
+  if (branchId) {
+    if (includeInactive) {
+      const rows = await db<ItemRow>`
+        SELECT * FROM items WHERE branch_id = ${branchId} ORDER BY nama ASC
+      `;
+      return rows.map(mapItem);
+    }
     const rows = await db<ItemRow>`
-      SELECT * FROM items ORDER BY nama ASC
+      SELECT * FROM items WHERE branch_id = ${branchId} AND is_active = true ORDER BY nama ASC
     `;
+    return rows.map(mapItem);
+  }
+
+  if (includeInactive) {
+    const rows = await db<ItemRow>`SELECT * FROM items ORDER BY nama ASC`;
     return rows.map(mapItem);
   }
   const rows = await db<ItemRow>`
@@ -45,11 +63,11 @@ export async function findById(db: SqlDb, id: string): Promise<Item | null> {
 
 export async function create(
   db: SqlDb,
-  data: { id: string; nama: string; tipe: string; harga: number }
+  data: { id: string; nama: string; tipe: string; harga: number; branchId: string }
 ): Promise<Item> {
   const rows = await db<ItemRow>`
-    INSERT INTO items (id, nama, tipe, harga)
-    VALUES (${data.id}, ${data.nama}, ${data.tipe}, ${data.harga})
+    INSERT INTO items (id, nama, tipe, harga, branch_id)
+    VALUES (${data.id}, ${data.nama}, ${data.tipe}, ${data.harga}, ${data.branchId})
     RETURNING *
   `;
   if (!rows[0]) throw new Error('Insert failed');

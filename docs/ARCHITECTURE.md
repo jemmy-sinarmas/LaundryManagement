@@ -178,16 +178,17 @@ laundry-palu/
 ### 4.1 Entity Relationship (simplified)
 
 ```
-users ──────< orders >────── customers
-                │                 │
-                │            memberships
-             order_items
-                │
-              items
-
-expenses >────── expense_categories
-
-inventory_items >────── inventory_transactions
+branches ──< users
+    │
+    ├──< orders >────── customers
+    │        │               │
+    │    order_items     memberships
+    │        │
+    │      items (per branch)
+    │
+    ├──< expenses >────── expense_categories (global)
+    │
+    └──< inventory_items >────── inventory_transactions
 ```
 
 ### 4.2 Tables
@@ -353,6 +354,21 @@ CREATE TABLE inventory_transactions (
 );
 
 -- ─────────────────────────────────────────────
+-- BRANCHES (v1.1)
+-- ─────────────────────────────────────────────
+CREATE TABLE branches (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nama       VARCHAR(100) NOT NULL,
+  kode       VARCHAR(10) UNIQUE NOT NULL,   -- short code e.g. PLW, PLT
+  alamat     TEXT,
+  is_active  BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- branch_id added to: users (nullable), items, orders, inventory_items, expenses
+-- pickup_token UUID UNIQUE added to orders
+
+-- ─────────────────────────────────────────────
 -- INDEXES
 -- ─────────────────────────────────────────────
 CREATE INDEX idx_orders_customer ON orders(customer_id);
@@ -397,6 +413,11 @@ All endpoints except `/api/v1/auth/login` and `/api/v1/track/*` require JWT in H
 | GET | /reports/monthly | Admin | Monthly revenue |
 | GET | /reports/income-statement | Admin | Income statement |
 | GET | /track/:invoiceNo | Public | Customer order tracking |
+| GET | /branches | Admin | List branches |
+| POST | /branches | Admin | Create branch |
+| PATCH | /branches/:id | Admin | Update branch |
+| GET | /orders/pickup/:token | Kasir, Admin | Fetch order by pickup token |
+| PATCH | /orders/pickup/:token/complete | Kasir, Admin | Validate pickup → advance to selesai |
 
 ---
 

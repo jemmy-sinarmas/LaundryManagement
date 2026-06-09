@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUsers } from '@/hooks/useUsers';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from '@/store/toastStore';
-import type { User } from '@laundry-palu/shared';
+import { api } from '@/lib/api';
+import type { Branch, User } from '@laundry-palu/shared';
 
 const ROLE_LABELS: Record<string, string> = { admin: 'Admin', kasir: 'Kasir' };
 
@@ -23,8 +24,8 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
-type CreateForm = { nama: string; username: string; password: string; role: string };
-const EMPTY_FORM: CreateForm = { nama: '', username: '', password: '', role: 'kasir' };
+type CreateForm = { nama: string; username: string; password: string; role: string; branchId: string };
+const EMPTY_FORM: CreateForm = { nama: '', username: '', password: '', role: 'kasir', branchId: '' };
 
 export default function UsersPage() {
   const { users, loading, error, createUser, toggleActive } = useUsers();
@@ -33,13 +34,18 @@ export default function UsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    api.get<Branch[]>('/api/v1/branches').then(setBranches).catch(() => setBranches([]));
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
     setSubmitting(true);
     try {
-      await createUser(form);
+      await createUser({ ...form, branchId: form.role === 'kasir' ? form.branchId : null });
       setShowDialog(false);
       setForm(EMPTY_FORM);
       toast.success('Pengguna berhasil dibuat');
@@ -151,12 +157,24 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Role</label>
-                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
+                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value, branchId: '' })}
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
                   <option value="kasir">Kasir</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              {form.role === 'kasir' && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Cabang <span className="text-red-500">*</span></label>
+                  <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} required
+                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                    <option value="">-- Pilih Cabang --</option>
+                    {branches.filter((b) => b.isActive).map((b) => (
+                      <option key={b.id} value={b.id}>{b.nama} ({b.kode})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => { setShowDialog(false); setForm(EMPTY_FORM); setFormError(null); }}
                   className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>

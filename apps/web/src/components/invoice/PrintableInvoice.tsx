@@ -1,7 +1,10 @@
 'use client';
 import QRCode from 'react-qr-code';
+import { Bluetooth, BluetoothConnected } from 'lucide-react';
 import { formatIDR } from '@/lib/utils';
 import type { Order } from '@laundry-palu/shared';
+import { useBluetooth } from '@/hooks/useBluetooth';
+import { useSettings } from '@/hooks/useSettings';
 
 type Props = {
   order: Order;
@@ -9,10 +12,16 @@ type Props = {
 };
 
 export default function PrintableInvoice({ order, onClose }: Props) {
-  const trackUrl =
+  const { connected, connecting, printing, btError, connect, printReceipt, setBtError } = useBluetooth();
+  const { settings } = useSettings();
+  const qrUrl =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/track/${order.invoiceNo}`
-      : `/track/${order.invoiceNo}`;
+      ? order.pickupToken
+        ? `${window.location.origin}/pickup/${order.pickupToken}`
+        : `${window.location.origin}/track/${order.invoiceNo}`
+      : order.pickupToken
+        ? `/pickup/${order.pickupToken}`
+        : `/track/${order.invoiceNo}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-white print:inset-auto">
@@ -79,8 +88,10 @@ export default function PrintableInvoice({ order, onClose }: Props) {
 
           {/* QR Code */}
           <div className="flex flex-col items-center gap-2 py-4">
-            <QRCode value={trackUrl} size={120} />
-            <p className="text-xs text-gray-400">Scan untuk lacak pesanan</p>
+            <QRCode value={qrUrl} size={120} />
+            <p className="text-xs text-gray-400">
+              {order.pickupToken ? 'Scan untuk validasi pengambilan' : 'Scan untuk lacak pesanan'}
+            </p>
           </div>
 
           {order.catatan && (
@@ -89,19 +100,45 @@ export default function PrintableInvoice({ order, onClose }: Props) {
         </div>
 
         {/* Actions (hidden when printing) */}
-        <div className="flex gap-3 border-t p-4 print:hidden">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Tutup
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Cetak
-          </button>
+        <div className="space-y-2 border-t p-4 print:hidden">
+          {btError && (
+            <p className="text-xs text-red-600">{btError}</p>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Tutup
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Cetak
+            </button>
+          </div>
+          <div className="flex gap-3">
+            {!connected ? (
+              <button
+                onClick={() => { setBtError(null); void connect(); }}
+                disabled={connecting}
+                className="flex flex-1 items-center justify-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Bluetooth size={14} />
+                {connecting ? 'Menghubungkan...' : 'Hubungkan Printer BT'}
+              </button>
+            ) : (
+              <button
+                onClick={() => { if (settings) void printReceipt(order, settings); }}
+                disabled={printing || !settings}
+                className="flex flex-1 items-center justify-center gap-2 rounded border border-green-600 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
+              >
+                <BluetoothConnected size={14} />
+                {printing ? 'Mencetak...' : 'Cetak via Bluetooth'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
