@@ -13,6 +13,7 @@ vi.mock('../../src/repositories/item.repo.js');
 vi.mock('../../src/repositories/membership.repo.js');
 vi.mock('../../src/repositories/branch.repo.js');
 vi.mock('../../src/services/membership.service.js');
+vi.mock('../../src/services/settings.service.js');
 vi.mock('../../src/utils/invoice.js');
 
 import * as orderRepo from '../../src/repositories/order.repo.js';
@@ -21,6 +22,7 @@ import * as itemRepo from '../../src/repositories/item.repo.js';
 import * as membershipRepo from '../../src/repositories/membership.repo.js';
 import * as branchRepo from '../../src/repositories/branch.repo.js';
 import * as membershipService from '../../src/services/membership.service.js';
+import * as settingsService from '../../src/services/settings.service.js';
 import * as invoice from '../../src/utils/invoice.js';
 
 afterEach(() => {
@@ -61,6 +63,16 @@ const mockItem: Item = {
   updatedAt: '2026-01-01T00:00:00Z',
 };
 
+const mockSettings = {
+  businessName: 'Laundry Palu',
+  businessAddress: '',
+  businessPhone: '',
+  invoiceFooter: '',
+  logoBase64: '',
+  ppnPercent: 0,
+  gratuityPercent: 0,
+};
+
 const mockOrder: Order = {
   id: 'order-1',
   invoiceNo: 'INV-PLW-20260606-0001',
@@ -69,6 +81,10 @@ const mockOrder: Order = {
   diskonPersen: 0,
   subtotal: 18000,
   diskonAmount: 0,
+  promoId: null,
+  promoDiskonAmount: 0,
+  gratuityAmount: 0,
+  ppnAmount: 0,
   total: 18000,
   status: 'diterima',
   catatan: null,
@@ -131,13 +147,27 @@ describe('isValidTransition', () => {
 
 describe('calculateOrderTotals', () => {
   it('applies discount correctly for periodik (10%)', () => {
-    const result = calculateOrderTotals([{ harga: 50000, qty: 2 }], 10);
-    expect(result).toEqual({ subtotal: 100000, diskonAmount: 10000, total: 90000 });
+    const result = calculateOrderTotals([{ harga: 50000, qty: 2 }], 10, 0, 0);
+    expect(result).toEqual({ subtotal: 100000, diskonAmount: 10000, promoDiskonAmount: 0, gratuityAmount: 0, ppnAmount: 0, total: 90000 });
   });
 
   it('applies zero discount when no membership', () => {
-    const result = calculateOrderTotals([{ harga: 15000, qty: 1 }], 0);
-    expect(result).toEqual({ subtotal: 15000, diskonAmount: 0, total: 15000 });
+    const result = calculateOrderTotals([{ harga: 15000, qty: 1 }], 0, 0, 0);
+    expect(result).toEqual({ subtotal: 15000, diskonAmount: 0, promoDiskonAmount: 0, gratuityAmount: 0, ppnAmount: 0, total: 15000 });
+  });
+
+  it('applies PPN 11% and gratuity 5% on after-discount amount', () => {
+    // subtotal=100000, diskon=10000, afterDiscount=90000
+    // gratuity=floor(90000*5/100)=4500, ppn=floor((90000+4500)*11/100)=10395
+    // total=90000+4500+10395=104895
+    const result = calculateOrderTotals([{ harga: 50000, qty: 2 }], 10, 11, 5);
+    expect(result).toEqual({ subtotal: 100000, diskonAmount: 10000, promoDiskonAmount: 0, gratuityAmount: 4500, ppnAmount: 10395, total: 104895 });
+  });
+
+  it('applies promo nominal discount', () => {
+    // subtotal=100000, memberDiskon=0, promoDiskon=15000, afterDiscount=85000, no ppn/gratuity
+    const result = calculateOrderTotals([{ harga: 50000, qty: 2 }], 0, 0, 0, 15000);
+    expect(result).toEqual({ subtotal: 100000, diskonAmount: 0, promoDiskonAmount: 15000, gratuityAmount: 0, ppnAmount: 0, total: 85000 });
   });
 });
 
@@ -147,6 +177,7 @@ describe('createOrder', () => {
     vi.mocked(customerRepo.findById).mockResolvedValue(mockCustomer);
     vi.mocked(itemRepo.findById).mockResolvedValue(mockItem);
     vi.mocked(branchRepo.findById).mockResolvedValue(mockBranch);
+    vi.mocked(settingsService.getSettings).mockResolvedValue(mockSettings);
     vi.mocked(orderRepo.create).mockResolvedValue(mockOrder);
   });
 

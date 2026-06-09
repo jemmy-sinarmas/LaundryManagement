@@ -7,6 +7,10 @@ import type {
   MonthlyReportData,
   IncomeStatementData,
   InventoryReportData,
+  SalesReportData,
+  TransactionsReportData,
+  InvoicesReportData,
+  ShiftsReportData,
 } from '../types/reports.js';
 
 // ---- Pure functions (unit-test targets) ----
@@ -111,6 +115,65 @@ export async function getIncomeStatement(
   const fixedCosts = expensesByLevel.find((r) => r.level === 'tetap')?.total ?? 0;
 
   return buildIncomeStatement(from, to, revenue, variableCosts, fixedCosts);
+}
+
+export async function getSalesReport(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null
+): Promise<SalesReportData> {
+  const { totalRevenue, totalOrders, byItem } = await reportRepo.getSalesInRange(db, from, to, branchId);
+  const avgOrderValue = totalOrders > 0 ? Math.floor(totalRevenue / totalOrders) : 0;
+
+  const byTypeMap = new Map<string, { revenue: number; qty: number }>();
+  for (const item of byItem) {
+    const existing = byTypeMap.get(item.tipe) ?? { revenue: 0, qty: 0 };
+    byTypeMap.set(item.tipe, { revenue: existing.revenue + item.revenue, qty: existing.qty + item.qty });
+  }
+  const byServiceType = Array.from(byTypeMap.entries()).map(([tipe, v]) => ({ tipe, ...v }));
+
+  return {
+    from,
+    to,
+    totalRevenue,
+    totalOrders,
+    avgOrderValue,
+    byServiceType,
+    topItems: byItem.slice(0, 10).map((i) => ({ namaItem: i.namaItem, tipe: i.tipe, revenue: i.revenue, qty: i.qty })),
+  };
+}
+
+export async function getTransactionsReport(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null,
+  status?: string | null
+): Promise<TransactionsReportData> {
+  const orders = await reportRepo.getTransactionsInRange(db, from, to, branchId, status);
+  return { from, to, count: orders.length, orders };
+}
+
+export async function getInvoicesReport(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null,
+  q?: string | null
+): Promise<InvoicesReportData> {
+  const invoices = await reportRepo.getInvoicesInRange(db, from, to, branchId, q);
+  return { from, to, count: invoices.length, invoices };
+}
+
+export async function getShiftsReport(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null
+): Promise<ShiftsReportData> {
+  const shifts = await reportRepo.getShiftsInRange(db, from, to, branchId);
+  return { from, to, shifts };
 }
 
 export async function getInventoryReport(db: SqlDb, branchId?: string | null): Promise<InventoryReportData> {

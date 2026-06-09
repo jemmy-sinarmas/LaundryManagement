@@ -6,6 +6,8 @@ export const UpdateSettingsSchema = z.object({
   businessPhone:   z.string().optional(),
   invoiceFooter:   z.string().optional(),
   logoBase64:      z.string().optional(),
+  ppnPercent:      z.number().min(0).max(100).optional(),
+  gratuityPercent: z.number().min(0).max(100).optional(),
 });
 
 export type UpdateSettingsInput = z.infer<typeof UpdateSettingsSchema>;

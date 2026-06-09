@@ -1,5 +1,5 @@
 # AI-DLC State — Laundry Palu
-Last updated: 2026-06-06
+Last updated: 2026-06-09
 
 ## Current Phase: INCEPTION complete → CONSTRUCTION ready
 
@@ -41,6 +41,11 @@ Last updated: 2026-06-06
 | 22 | branch-expenses | COMPLETE | 012_expense_branch.sql; Expense.branchId in shared; expense.repo/service/routes updated with branchId scoping; 65/65 tests |
 | 23 | branch-reports-ui | COMPLETE | All 8 report.repo query functions updated with optional branchId; report.service threads branchId; routes/reports accept ?branch_id=; branches/page.tsx CRUD; Sidebar Cabang link; 65/65 tests |
 | 24 | pickup-qr-validation | COMPLETE | (kasir)/pickup/[token]/page.tsx — 3 states (not-ready/ready/done); validates via PATCH /pickup/:token/complete; contingency link to orders page; 65/65 tests |
+| 25 | ppn-gratuity | COMPLETE | 013_ppn_gratuity_order.sql; AppSettings+Order updated; calculateOrderTotals extended; settings page Pajak section; PrintableInvoice shows tax lines; 67/67 tests |
+| 26 | admin-receipt-preview | COMPLETE | (admin)/orders/page.tsx with Preview Nota modal; findById now joins items+customer; Pesanan in sidebar; settings Preview Nota button with fixture order; 67/67 tests |
+| 27 | promotions-module | COMPLETE | 014_promotions.sql; Promotion type; full API (repo/service/schema/route); promo discount in order calculation; POS promo selection; admin promotions page; Promosi in sidebar; 67/67 tests |
+| 28 | shift-system | COMPLETE | 015_shifts.sql + partial unique index; Shift type in shared; shift.repo/service/schema/routes; kasir /shift page with Start/End UI; BottomNav Shift tab; 73/73 tests |
+| 29 | reports-extended | COMPLETE | DatePeriodFilter component (8 presets + custom range); /reports/sales /transactions /invoices /shifts API + repo + service; 4 new admin report pages; reports landing updated; 73/73 tests |
 
 ---
 

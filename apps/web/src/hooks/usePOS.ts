@@ -1,25 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { usePosStore } from '@/store/posStore';
-import type { Customer, Item, MembershipValidationResult, Order } from '@laundry-palu/shared';
+import type { Customer, Item, MembershipValidationResult, Order, Promotion } from '@laundry-palu/shared';
 
 export function usePOS() {
   const [items, setItems] = useState<Item[]>([]);
+  const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [customerQuery, setCustomerQuery] = useState('');
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const { cart, addToCart, updateQty, removeFromCart, clearCart, addPendingOrder } = usePosStore();
 
-  // Load items on mount
   useEffect(() => {
     api.get<Item[]>('/api/v1/items').then(setItems).catch(() => null);
+    api.get<Promotion[]>('/api/v1/promotions').then(setActivePromotions).catch(() => null);
   }, []);
 
-  // Search customers with debounce
   useEffect(() => {
     if (!customerQuery.trim()) {
       setCustomerResults([]);
@@ -42,6 +43,7 @@ export function usePOS() {
     setSelectedCustomer(customer);
     setCustomerQuery('');
     setCustomerResults([]);
+    setSelectedPromo(null);
     try {
       const v = await api.get<MembershipValidationResult>(
         `/api/v1/customers/${customer.id}/membership/validate`
@@ -54,7 +56,14 @@ export function usePOS() {
 
   const subtotal = cart.reduce((s, c) => s + Math.floor(c.item.harga * c.qty), 0);
   const diskonAmount = Math.floor((subtotal * discountPercent) / 100);
-  const total = subtotal - diskonAmount;
+
+  const promoDiskonAmount = selectedPromo
+    ? selectedPromo.tipe === 'persen'
+      ? Math.floor((subtotal * selectedPromo.nilai) / 100)
+      : Math.min(selectedPromo.nilai, subtotal)
+    : 0;
+
+  const total = subtotal - diskonAmount - promoDiskonAmount;
 
   async function submitOrder(catatan?: string) {
     if (!selectedCustomer) throw new Error('Pilih pelanggan terlebih dahulu');
@@ -63,6 +72,7 @@ export function usePOS() {
     const payload = {
       customerId: selectedCustomer.id,
       catatan: catatan ?? null,
+      promoId: selectedPromo?.id,
       items: cart.map((c) => ({ itemId: c.item.id, qty: c.qty })),
     };
 
@@ -72,10 +82,10 @@ export function usePOS() {
       clearCart();
       setSelectedCustomer(null);
       setDiscountPercent(0);
+      setSelectedPromo(null);
       setCreatedOrder(order);
       return order;
     } catch {
-      // Save to offline queue so it syncs on reconnect
       addPendingOrder({ ...payload, timestamp: Date.now() });
       throw new Error('Jaringan bermasalah. Pesanan disimpan ke antrian offline.');
     } finally {
@@ -89,12 +99,15 @@ export function usePOS() {
 
   return {
     items,
+    activePromotions,
     customerQuery,
     setCustomerQuery,
     customerResults,
     selectedCustomer,
     selectCustomer,
     discountPercent,
+    selectedPromo,
+    setSelectedPromo,
     cart,
     addToCart,
     updateQty,
@@ -102,6 +115,7 @@ export function usePOS() {
     clearCart,
     subtotal,
     diskonAmount,
+    promoDiskonAmount,
     total,
     createdOrder,
     clearCreatedOrder,

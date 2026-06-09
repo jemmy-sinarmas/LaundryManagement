@@ -38,12 +38,28 @@ export interface Customer {
   updatedAt: string;
 }
 
+export interface Promotion {
+  id: string;
+  nama: string;
+  tipe: 'persen' | 'nominal';
+  nilai: number;
+  minOrder: number;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  branchId: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AppSettings {
   businessName: string;
   businessAddress: string;
   businessPhone: string;
   invoiceFooter: string;
   logoBase64: string;
+  ppnPercent: number;
+  gratuityPercent: number;
 }
 
 interface MembershipBase {
@@ -113,6 +129,10 @@ export interface Order {
   diskonPersen: number;
   subtotal: number;
   diskonAmount: number;
+  promoId: string | null;
+  promoDiskonAmount: number;
+  gratuityAmount: number;
+  ppnAmount: number;
   total: number;
   status: OrderStatus;
   catatan: string | null;
@@ -171,6 +191,20 @@ export interface InventoryTransaction {
   fotoReferensi: string | null;
   createdBy: string | null;
   createdAt: string;
+}
+
+export interface Shift {
+  id: string;
+  kasirId: string;
+  branchId: string;
+  startTime: string;
+  endTime: string | null;
+  startCash: number;
+  endCash: number | null;
+  notes: string | null;
+  createdAt: string;
+  kasir?: Pick<User, 'id' | 'nama' | 'username'>;
+  branch?: Pick<Branch, 'id' | 'nama'>;
 }
 
 export interface MembershipValidationResult {

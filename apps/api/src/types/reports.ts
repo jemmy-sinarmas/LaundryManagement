@@ -41,3 +41,66 @@ export type InventoryReportData = {
   items: Array<InventoryItem & { stockValue: number }>;
   totalStockValue: number;
 };
+
+export type SalesReportData = {
+  from: string;
+  to: string;
+  totalRevenue: number;
+  totalOrders: number;
+  avgOrderValue: number;
+  byServiceType: { tipe: string; revenue: number; qty: number }[];
+  topItems: { namaItem: string; tipe: string; revenue: number; qty: number }[];
+};
+
+export type TransactionItem = {
+  id: string;
+  invoiceNo: string;
+  customerNama: string;
+  branchId: string | null;
+  status: string;
+  total: number;
+  createdAt: string;
+};
+
+export type TransactionsReportData = {
+  from: string;
+  to: string;
+  count: number;
+  orders: TransactionItem[];
+};
+
+export type InvoiceItem = {
+  id: string;
+  invoiceNo: string;
+  customerNama: string;
+  branchId: string | null;
+  status: string;
+  total: number;
+  createdAt: string;
+};
+
+export type InvoicesReportData = {
+  from: string;
+  to: string;
+  count: number;
+  invoices: InvoiceItem[];
+};
+
+export type ShiftReportItem = {
+  id: string;
+  kasirNama: string;
+  kasirUsername: string;
+  branchNama: string;
+  startTime: string;
+  endTime: string | null;
+  startCash: number;
+  endCash: number | null;
+  notes: string | null;
+  orderCount: number;
+};
+
+export type ShiftsReportData = {
+  from: string;
+  to: string;
+  shifts: ShiftReportItem[];
+};

@@ -10,6 +10,10 @@ type OrderRow = {
   diskon_persen: number | string;
   subtotal: number | bigint;
   diskon_amount: number | bigint;
+  ppn_amount: number | bigint;
+  gratuity_amount: number | bigint;
+  promo_id: string | null;
+  promo_diskon_amount: number | bigint;
   total: number | bigint;
   status: string;
   catatan: string | null;
@@ -79,6 +83,10 @@ function mapOrder(row: OrderRow): Order {
     diskonPersen: Number(row.diskon_persen),
     subtotal: Number(row.subtotal),
     diskonAmount: Number(row.diskon_amount),
+    promoId: row.promo_id ?? null,
+    promoDiskonAmount: Number(row.promo_diskon_amount),
+    gratuityAmount: Number(row.gratuity_amount),
+    ppnAmount: Number(row.ppn_amount),
     total: Number(row.total),
     status: row.status as OrderStatus,
     catatan: row.catatan,
@@ -100,6 +108,10 @@ export async function create(
     diskonPersen: number;
     subtotal: number;
     diskonAmount: number;
+    promoId: string | null;
+    promoDiskonAmount: number;
+    gratuityAmount: number;
+    ppnAmount: number;
     total: number;
     catatan: string | null;
     branchId: string;
@@ -118,10 +130,13 @@ export async function create(
   const orderRows = await db<OrderRow>`
     INSERT INTO orders
       (id, invoice_no, customer_id, membership_id, diskon_persen,
-       subtotal, diskon_amount, total, status, catatan, branch_id, created_by)
+       subtotal, diskon_amount, promo_id, promo_diskon_amount,
+       ppn_amount, gratuity_amount, total, status, catatan, branch_id, created_by)
     VALUES
       (${data.id}, ${data.invoiceNo}, ${data.customerId}, ${data.membershipId},
-       ${data.diskonPersen}, ${data.subtotal}, ${data.diskonAmount}, ${data.total},
+       ${data.diskonPersen}, ${data.subtotal}, ${data.diskonAmount},
+       ${data.promoId}, ${data.promoDiskonAmount},
+       ${data.ppnAmount}, ${data.gratuityAmount}, ${data.total},
        'diterima', ${data.catatan}, ${data.branchId}, ${data.createdBy})
     RETURNING *
   `;
@@ -151,10 +166,19 @@ export async function create(
 }
 
 export async function findById(db: SqlDb, id: string): Promise<Order | null> {
-  const rows = await db<OrderRow>`
-    SELECT * FROM orders WHERE id = ${id} LIMIT 1
-  `;
-  return rows[0] ? mapOrder(rows[0]) : null;
+  const rows = await db<OrderRow>`SELECT * FROM orders WHERE id = ${id} LIMIT 1`;
+  if (!rows[0]) return null;
+  const order = mapOrder(rows[0]);
+
+  const itemRows = await db<OrderItemRow>`SELECT * FROM order_items WHERE order_id = ${id} ORDER BY id`;
+  order.items = itemRows.map(mapOrderItem);
+
+  const customerRows = await db<CustomerPickRow>`SELECT id, nama, no_hp FROM customers WHERE id = ${order.customerId} LIMIT 1`;
+  if (customerRows[0]) {
+    order.customer = { id: customerRows[0].id, nama: customerRows[0].nama, noHp: customerRows[0].no_hp };
+  }
+
+  return order;
 }
 
 export async function findByInvoiceNo(db: SqlDb, invoiceNo: string): Promise<Order | null> {

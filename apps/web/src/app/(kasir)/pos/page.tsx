@@ -131,12 +131,14 @@ function NewCustomerModal({
 export default function PosPage() {
   const {
     items,
+    activePromotions,
     customerQuery, setCustomerQuery,
     customerResults,
     selectedCustomer, selectCustomer,
     discountPercent,
+    selectedPromo, setSelectedPromo,
     cart, addToCart, updateQty, removeFromCart,
-    subtotal, diskonAmount, total,
+    subtotal, diskonAmount, promoDiskonAmount, total,
     createdOrder, clearCreatedOrder,
     submitting, submitOrder,
   } = usePOS();
@@ -325,6 +327,31 @@ export default function PosPage() {
 
         {/* Totals + submit */}
         <div className="space-y-3 border-t p-4">
+          {/* Promo selection */}
+          {selectedCustomer && activePromotions.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">Pilih Promosi</p>
+              <div className="space-y-1.5">
+                {activePromotions.map((promo) => (
+                  <button
+                    key={promo.id}
+                    onClick={() => setSelectedPromo(selectedPromo?.id === promo.id ? null : promo)}
+                    className={`w-full rounded border px-3 py-2 text-left text-xs transition-colors ${
+                      selectedPromo?.id === promo.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-800'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="font-medium">{promo.nama}</span>
+                    <span className="ml-1 text-gray-500">
+                      {promo.tipe === 'persen' ? `${promo.nilai}%` : `- ${formatIDR(promo.nilai)}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1 text-sm">
             <div className="flex justify-between text-gray-500">
               <span>Subtotal</span>
@@ -332,8 +359,14 @@ export default function PosPage() {
             </div>
             {diskonAmount > 0 && (
               <div className="flex justify-between text-green-700">
-                <span>Diskon ({discountPercent}%)</span>
+                <span>Diskon Member ({discountPercent}%)</span>
                 <span>- {formatIDR(diskonAmount)}</span>
+              </div>
+            )}
+            {promoDiskonAmount > 0 && (
+              <div className="flex justify-between text-blue-700">
+                <span>Promo {selectedPromo?.nama}</span>
+                <span>- {formatIDR(promoDiskonAmount)}</span>
               </div>
             )}
             <div className="flex justify-between border-t pt-1 font-semibold">

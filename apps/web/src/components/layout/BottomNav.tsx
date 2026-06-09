@@ -1,12 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, ClipboardList } from 'lucide-react';
+import { ShoppingCart, ClipboardList, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/pos',    label: 'Kasir',   icon: ShoppingCart },
   { href: '/orders', label: 'Pesanan', icon: ClipboardList },
+  { href: '/shift',  label: 'Shift',   icon: Clock },
 ];
 
 export default function BottomNav() {

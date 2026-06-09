@@ -76,8 +76,26 @@ export default function PrintableInvoice({ order, onClose }: Props) {
             </div>
             {order.diskonAmount > 0 && (
               <div className="flex justify-between text-green-700">
-                <span>Diskon ({order.diskonPersen}%)</span>
+                <span>Diskon Member ({order.diskonPersen}%)</span>
                 <span>- {formatIDR(order.diskonAmount)}</span>
+              </div>
+            )}
+            {(order.promoDiskonAmount ?? 0) > 0 && (
+              <div className="flex justify-between text-blue-700">
+                <span>Diskon Promo</span>
+                <span>- {formatIDR(order.promoDiskonAmount ?? 0)}</span>
+              </div>
+            )}
+            {(order.gratuityAmount ?? 0) > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>Biaya Layanan</span>
+                <span>+ {formatIDR(order.gratuityAmount ?? 0)}</span>
+              </div>
+            )}
+            {(order.ppnAmount ?? 0) > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>PPN</span>
+                <span>+ {formatIDR(order.ppnAmount ?? 0)}</span>
               </div>
             )}
             <div className="flex justify-between border-t pt-1 font-semibold">

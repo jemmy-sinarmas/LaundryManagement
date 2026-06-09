@@ -3,34 +3,27 @@ import type { SqlDb } from '../lib/db-types.js';
 
 type SettingsRow = { key: string; value: string };
 
-const KEY_MAP: Record<string, keyof AppSettings> = {
-  business_name:    'businessName',
-  business_address: 'businessAddress',
-  business_phone:   'businessPhone',
-  invoice_footer:   'invoiceFooter',
-  logo_base64:      'logoBase64',
-};
-
 const CAMEL_TO_DB: Record<keyof AppSettings, string> = {
   businessName:    'business_name',
   businessAddress: 'business_address',
   businessPhone:   'business_phone',
   invoiceFooter:   'invoice_footer',
   logoBase64:      'logo_base64',
+  ppnPercent:      'ppn_percent',
+  gratuityPercent: 'gratuity_percent',
 };
 
 function rowsToSettings(rows: SettingsRow[]): AppSettings {
-  const result: Partial<AppSettings> = {};
-  for (const row of rows) {
-    const camel = KEY_MAP[row.key];
-    if (camel) (result as Record<string, string>)[camel] = row.value;
-  }
+  const raw: Record<string, string> = {};
+  for (const row of rows) raw[row.key] = row.value;
   return {
-    businessName:    result.businessName    ?? '',
-    businessAddress: result.businessAddress ?? '',
-    businessPhone:   result.businessPhone   ?? '',
-    invoiceFooter:   result.invoiceFooter   ?? '',
-    logoBase64:      result.logoBase64      ?? '',
+    businessName:    raw['business_name']    ?? '',
+    businessAddress: raw['business_address'] ?? '',
+    businessPhone:   raw['business_phone']   ?? '',
+    invoiceFooter:   raw['invoice_footer']   ?? '',
+    logoBase64:      raw['logo_base64']      ?? '',
+    ppnPercent:      Number(raw['ppn_percent']      ?? 0),
+    gratuityPercent: Number(raw['gratuity_percent'] ?? 0),
   };
 }
 
@@ -41,14 +34,16 @@ export async function getAll(db: SqlDb): Promise<AppSettings> {
 
 export async function upsertMany(
   db: SqlDb,
-  updates: { [K in keyof AppSettings]?: string | undefined }
+  updates: { [K in keyof AppSettings]?: AppSettings[K] | undefined }
 ): Promise<AppSettings> {
-  for (const [camel, value] of Object.entries(updates) as [keyof AppSettings, string][]) {
+  for (const [camel, value] of Object.entries(updates) as [keyof AppSettings, AppSettings[keyof AppSettings] | undefined][]) {
+    if (value === undefined) continue;
     const dbKey = CAMEL_TO_DB[camel];
     if (!dbKey) continue;
+    const strValue = String(value);
     await db`
       INSERT INTO settings (key, value, updated_at)
-      VALUES (${dbKey}, ${value}, NOW())
+      VALUES (${dbKey}, ${strValue}, NOW())
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
     `;
   }

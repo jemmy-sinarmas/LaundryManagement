@@ -16,6 +16,8 @@ import inventoryRoutes from './routes/inventory/index.js';
 import reportRoutes from './routes/reports/index.js';
 import settingsRoutes from './routes/settings/index.js';
 import branchRoutes from './routes/branches/index.js';
+import promotionRoutes from './routes/promotions/index.js';
+import shiftRoutes from './routes/shifts/index.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -50,6 +52,8 @@ await fastify.register(inventoryRoutes,       { prefix: '/api/v1/inventory' });
 await fastify.register(reportRoutes,          { prefix: '/api/v1/reports' });
 await fastify.register(settingsRoutes,        { prefix: '/api/v1/settings' });
 await fastify.register(branchRoutes,          { prefix: '/api/v1/branches' });
+await fastify.register(promotionRoutes,       { prefix: '/api/v1/promotions' });
+await fastify.register(shiftRoutes,           { prefix: '/api/v1/shifts' });
 
 fastify.get('/health', async () => ({ status: 'ok' }));
 

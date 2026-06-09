@@ -7,6 +7,8 @@ import * as customerRepo from '../repositories/customer.repo.js';
 import * as itemRepo from '../repositories/item.repo.js';
 import * as membershipRepo from '../repositories/membership.repo.js';
 import * as branchRepo from '../repositories/branch.repo.js';
+import * as promotionRepo from '../repositories/promotion.repo.js';
+import * as settingsService from './settings.service.js';
 import { validateMembership } from './membership.service.js';
 import { generateInvoiceNo } from '../utils/invoice.js';
 import type { CreateOrderInput } from '../schemas/order.schema.js';
@@ -25,11 +27,17 @@ export function isValidTransition(from: OrderStatus, to: OrderStatus): boolean {
 
 export function calculateOrderTotals(
   items: { harga: number; qty: number }[],
-  discountPercent: number
-): { subtotal: number; diskonAmount: number; total: number } {
+  discountPercent: number,
+  ppnPercent: number,
+  gratuityPercent: number,
+  promoDiskonAmount = 0
+): { subtotal: number; diskonAmount: number; promoDiskonAmount: number; gratuityAmount: number; ppnAmount: number; total: number } {
   const subtotal = items.reduce((s, i) => s + Math.floor(i.harga * i.qty), 0);
   const diskonAmount = Math.floor((subtotal * discountPercent) / 100);
-  return { subtotal, diskonAmount, total: subtotal - diskonAmount };
+  const afterDiscount = subtotal - diskonAmount - promoDiskonAmount;
+  const gratuityAmount = Math.floor((afterDiscount * gratuityPercent) / 100);
+  const ppnAmount = Math.floor(((afterDiscount + gratuityAmount) * ppnPercent) / 100);
+  return { subtotal, diskonAmount, promoDiskonAmount, gratuityAmount, ppnAmount, total: afterDiscount + gratuityAmount + ppnAmount };
 }
 
 export async function createOrder(
@@ -67,9 +75,27 @@ export async function createOrder(
     subtotal: Math.floor(item.harga * item.qty),
   }));
 
+  const appSettings = await settingsService.getSettings(db);
+
+  let promoId: string | null = null;
+  let promoDiskonAmount = 0;
+  if (data.promoId) {
+    const promo = await promotionRepo.findById(db, data.promoId);
+    if (!promo || !promo.isActive) throw makeError('Promosi tidak valid atau tidak aktif', 400);
+    const subtotalPreview = itemsWithSnapshot.reduce((s, i) => s + i.subtotal, 0);
+    if (subtotalPreview < promo.minOrder) throw makeError(`Minimum order untuk promosi ini adalah ${promo.minOrder}`, 400);
+    promoId = promo.id;
+    promoDiskonAmount = promo.tipe === 'persen'
+      ? Math.floor((subtotalPreview * promo.nilai) / 100)
+      : Math.min(promo.nilai, subtotalPreview);
+  }
+
   const totals = calculateOrderTotals(
     itemsWithSnapshot.map((i) => ({ harga: i.harga, qty: i.qty })),
-    discountPercent
+    discountPercent,
+    appSettings.ppnPercent,
+    appSettings.gratuityPercent,
+    promoDiskonAmount
   );
 
   const invoiceNo = await generateInvoiceNo(db, branch.kode, branchId);
@@ -80,6 +106,7 @@ export async function createOrder(
     customerId: data.customerId,
     membershipId: membership?.id ?? null,
     diskonPersen: discountPercent,
+    promoId,
     ...totals,
     catatan: data.catatan ?? null,
     branchId,

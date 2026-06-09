@@ -11,19 +11,23 @@ import {
   UserCog,
   Settings,
   GitBranch,
+  ClipboardList,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dasbor',      icon: LayoutDashboard },
-  { href: '/customers', label: 'Pelanggan',    icon: Users },
-  { href: '/items',     label: 'Layanan',      icon: Package },
-  { href: '/expenses',  label: 'Pengeluaran',  icon: DollarSign },
-  { href: '/inventory', label: 'Inventori',    icon: Boxes },
-  { href: '/reports',   label: 'Laporan',      icon: BarChart3 },
-  { href: '/branches',  label: 'Cabang',       icon: GitBranch },
-  { href: '/users',     label: 'Pengguna',     icon: UserCog },
-  { href: '/settings',  label: 'Pengaturan',   icon: Settings },
+  { href: '/dashboard',   label: 'Dasbor',      icon: LayoutDashboard },
+  { href: '/customers',   label: 'Pelanggan',    icon: Users },
+  { href: '/orders',      label: 'Pesanan',      icon: ClipboardList },
+  { href: '/items',       label: 'Layanan',      icon: Package },
+  { href: '/promotions',  label: 'Promosi',      icon: Tag },
+  { href: '/expenses',    label: 'Pengeluaran',  icon: DollarSign },
+  { href: '/inventory',   label: 'Inventori',    icon: Boxes },
+  { href: '/reports',     label: 'Laporan',      icon: BarChart3 },
+  { href: '/branches',    label: 'Cabang',       icon: GitBranch },
+  { href: '/users',       label: 'Pengguna',     icon: UserCog },
+  { href: '/settings',    label: 'Pengaturan',   icon: Settings },
 ];
 
 export default function Sidebar() {

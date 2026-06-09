@@ -4,6 +4,7 @@ import { ORDER_STATUSES } from '@laundry-palu/shared';
 export const CreateOrderSchema = z.object({
   customerId: z.string().uuid(),
   catatan: z.string().nullable().optional(),
+  promoId: z.string().uuid().optional(),
   items: z
     .array(
       z.object({

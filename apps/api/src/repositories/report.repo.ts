@@ -337,6 +337,282 @@ export async function getExpensesByLevelInRange(
   return rows.map((r) => ({ level: r.level, total: Number(r.total) }));
 }
 
+// ---- Sales ----
+
+type SalesItemRow = {
+  nama_item: string;
+  tipe: string;
+  revenue: number | bigint;
+  qty: number | bigint;
+};
+
+type SalesTotalsRow = {
+  total_revenue: number | bigint;
+  order_count: string;
+};
+
+export async function getSalesInRange(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null
+): Promise<{
+  totalRevenue: number;
+  totalOrders: number;
+  byItem: { namaItem: string; tipe: string; revenue: number; qty: number }[];
+}> {
+  const itemRows = branchId
+    ? await db<SalesItemRow>`
+        SELECT oi.nama_item, oi.tipe,
+               COALESCE(SUM(oi.subtotal), 0) AS revenue,
+               COALESCE(SUM(oi.qty), 0) AS qty
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        WHERE o.status = 'selesai'
+          AND DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+          AND o.branch_id = ${branchId}
+        GROUP BY oi.nama_item, oi.tipe
+        ORDER BY revenue DESC
+      `
+    : await db<SalesItemRow>`
+        SELECT oi.nama_item, oi.tipe,
+               COALESCE(SUM(oi.subtotal), 0) AS revenue,
+               COALESCE(SUM(oi.qty), 0) AS qty
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        WHERE o.status = 'selesai'
+          AND DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        GROUP BY oi.nama_item, oi.tipe
+        ORDER BY revenue DESC
+      `;
+
+  const totalsRows = branchId
+    ? await db<SalesTotalsRow>`
+        SELECT COALESCE(SUM(total), 0) AS total_revenue, COUNT(*)::text AS order_count
+        FROM orders
+        WHERE status = 'selesai'
+          AND DATE(created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+          AND branch_id = ${branchId}
+      `
+    : await db<SalesTotalsRow>`
+        SELECT COALESCE(SUM(total), 0) AS total_revenue, COUNT(*)::text AS order_count
+        FROM orders
+        WHERE status = 'selesai'
+          AND DATE(created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+      `;
+
+  return {
+    totalRevenue: Number(totalsRows[0]?.total_revenue ?? 0),
+    totalOrders: Number(totalsRows[0]?.order_count ?? 0),
+    byItem: itemRows.map((r) => ({
+      namaItem: r.nama_item,
+      tipe: r.tipe,
+      revenue: Number(r.revenue),
+      qty: Number(r.qty),
+    })),
+  };
+}
+
+// ---- Transactions ----
+
+type TransactionRow = {
+  id: string;
+  invoice_no: string;
+  customer_nama: string;
+  branch_id: string | null;
+  status: string;
+  total: number | bigint;
+  created_at: string;
+};
+
+export async function getTransactionsInRange(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null,
+  status?: string | null
+): Promise<{ id: string; invoiceNo: string; customerNama: string; branchId: string | null; status: string; total: number; createdAt: string }[]> {
+  let rows: TransactionRow[];
+  if (branchId && status) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND o.branch_id = ${branchId} AND o.status = ${status}
+      ORDER BY o.created_at DESC
+    `;
+  } else if (branchId) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND o.branch_id = ${branchId}
+      ORDER BY o.created_at DESC
+    `;
+  } else if (status) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND o.status = ${status}
+      ORDER BY o.created_at DESC
+    `;
+  } else {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+      ORDER BY o.created_at DESC
+    `;
+  }
+  return rows.map((r) => ({
+    id: r.id,
+    invoiceNo: r.invoice_no,
+    customerNama: r.customer_nama,
+    branchId: r.branch_id ?? null,
+    status: r.status,
+    total: Number(r.total),
+    createdAt: r.created_at,
+  }));
+}
+
+// ---- Invoices ----
+
+export async function getInvoicesInRange(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null,
+  q?: string | null
+): Promise<{ id: string; invoiceNo: string; customerNama: string; branchId: string | null; status: string; total: number; createdAt: string }[]> {
+  const search = q ? `%${q}%` : null;
+  let rows: TransactionRow[];
+  if (branchId && search) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND o.branch_id = ${branchId}
+        AND (o.invoice_no ILIKE ${search} OR c.nama ILIKE ${search})
+      ORDER BY o.created_at DESC
+    `;
+  } else if (branchId) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND o.branch_id = ${branchId}
+      ORDER BY o.created_at DESC
+    `;
+  } else if (search) {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        AND (o.invoice_no ILIKE ${search} OR c.nama ILIKE ${search})
+      ORDER BY o.created_at DESC
+    `;
+  } else {
+    rows = await db<TransactionRow>`
+      SELECT o.id, o.invoice_no, c.nama AS customer_nama, o.branch_id, o.status, o.total, o.created_at
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE DATE(o.created_at AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+      ORDER BY o.created_at DESC
+    `;
+  }
+  return rows.map((r) => ({
+    id: r.id,
+    invoiceNo: r.invoice_no,
+    customerNama: r.customer_nama,
+    branchId: r.branch_id ?? null,
+    status: r.status,
+    total: Number(r.total),
+    createdAt: r.created_at,
+  }));
+}
+
+// ---- Shifts report ----
+
+type ShiftReportRow = {
+  id: string;
+  kasir_nama: string;
+  kasir_username: string;
+  branch_nama: string;
+  start_time: string;
+  end_time: string | null;
+  start_cash: number | bigint;
+  end_cash: number | bigint | null;
+  notes: string | null;
+  order_count: string;
+};
+
+export async function getShiftsInRange(
+  db: SqlDb,
+  from: string,
+  to: string,
+  branchId?: string | null
+): Promise<{
+  id: string;
+  kasirNama: string;
+  kasirUsername: string;
+  branchNama: string;
+  startTime: string;
+  endTime: string | null;
+  startCash: number;
+  endCash: number | null;
+  notes: string | null;
+  orderCount: number;
+}[]> {
+  const rows = branchId
+    ? await db<ShiftReportRow>`
+        SELECT s.id, u.nama AS kasir_nama, u.username AS kasir_username, b.nama AS branch_nama,
+               s.start_time, s.end_time, s.start_cash, s.end_cash, s.notes,
+               (SELECT COUNT(*)::text FROM orders o
+                WHERE o.created_by = s.kasir_id
+                  AND o.created_at >= s.start_time
+                  AND o.created_at < COALESCE(s.end_time, NOW())) AS order_count
+        FROM shifts s
+        JOIN users    u ON u.id = s.kasir_id
+        JOIN branches b ON b.id = s.branch_id
+        WHERE DATE(s.start_time AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+          AND s.branch_id = ${branchId}
+        ORDER BY s.start_time DESC
+      `
+    : await db<ShiftReportRow>`
+        SELECT s.id, u.nama AS kasir_nama, u.username AS kasir_username, b.nama AS branch_nama,
+               s.start_time, s.end_time, s.start_cash, s.end_cash, s.notes,
+               (SELECT COUNT(*)::text FROM orders o
+                WHERE o.created_by = s.kasir_id
+                  AND o.created_at >= s.start_time
+                  AND o.created_at < COALESCE(s.end_time, NOW())) AS order_count
+        FROM shifts s
+        JOIN users    u ON u.id = s.kasir_id
+        JOIN branches b ON b.id = s.branch_id
+        WHERE DATE(s.start_time AT TIME ZONE 'UTC') BETWEEN ${from}::date AND ${to}::date
+        ORDER BY s.start_time DESC
+      `;
+  return rows.map((r) => ({
+    id: r.id,
+    kasirNama: r.kasir_nama,
+    kasirUsername: r.kasir_username,
+    branchNama: r.branch_nama,
+    startTime: r.start_time,
+    endTime: r.end_time ?? null,
+    startCash: Number(r.start_cash),
+    endCash: r.end_cash !== null && r.end_cash !== undefined ? Number(r.end_cash) : null,
+    notes: r.notes ?? null,
+    orderCount: Number(r.order_count),
+  }));
+}
+
 // ---- Inventory snapshot ----
 
 export async function getInventorySnapshot(

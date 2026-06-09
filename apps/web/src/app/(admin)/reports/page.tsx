@@ -16,6 +16,26 @@ const REPORTS = [
     title: 'Laporan Laba Rugi',
     description: 'Laporan laba rugi dalam rentang waktu tertentu',
   },
+  {
+    href: '/reports/sales',
+    title: 'Laporan Penjualan',
+    description: 'Analisis pendapatan per jenis layanan dan item terlaris',
+  },
+  {
+    href: '/reports/transactions',
+    title: 'Laporan Transaksi',
+    description: 'Semua transaksi pesanan dalam periode tertentu',
+  },
+  {
+    href: '/reports/invoices',
+    title: 'Laporan Faktur',
+    description: 'Daftar faktur dengan pencarian dan preview nota',
+  },
+  {
+    href: '/reports/shifts',
+    title: 'Laporan Shift',
+    description: 'Rekap shift kasir beserta modal dan jumlah pesanan',
+  },
 ];
 
 export default function ReportsIndexPage() {

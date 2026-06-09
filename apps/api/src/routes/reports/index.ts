@@ -51,6 +51,46 @@ const reportRoutes: FastifyPluginAsync = async (fastify) => {
     const data = await reportService.getInventoryReport(fastify.db, branch_id ?? null);
     reply.send(data);
   });
+
+  fastify.get('/sales', adminOnly, async (req, reply) => {
+    const { from, to, branch_id } = req.query as { from?: string; to?: string; branch_id?: string };
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!from || !to || !dateRe.test(from) || !dateRe.test(to)) {
+      return reply.code(400).send({ error: 'from and to are required (YYYY-MM-DD)' });
+    }
+    const data = await reportService.getSalesReport(fastify.db, from, to, branch_id ?? null);
+    reply.send(data);
+  });
+
+  fastify.get('/transactions', adminOnly, async (req, reply) => {
+    const { from, to, branch_id, status } = req.query as { from?: string; to?: string; branch_id?: string; status?: string };
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!from || !to || !dateRe.test(from) || !dateRe.test(to)) {
+      return reply.code(400).send({ error: 'from and to are required (YYYY-MM-DD)' });
+    }
+    const data = await reportService.getTransactionsReport(fastify.db, from, to, branch_id ?? null, status ?? null);
+    reply.send(data);
+  });
+
+  fastify.get('/invoices', adminOnly, async (req, reply) => {
+    const { from, to, branch_id, q } = req.query as { from?: string; to?: string; branch_id?: string; q?: string };
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!from || !to || !dateRe.test(from) || !dateRe.test(to)) {
+      return reply.code(400).send({ error: 'from and to are required (YYYY-MM-DD)' });
+    }
+    const data = await reportService.getInvoicesReport(fastify.db, from, to, branch_id ?? null, q ?? null);
+    reply.send(data);
+  });
+
+  fastify.get('/shifts', adminOnly, async (req, reply) => {
+    const { from, to, branch_id } = req.query as { from?: string; to?: string; branch_id?: string };
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!from || !to || !dateRe.test(from) || !dateRe.test(to)) {
+      return reply.code(400).send({ error: 'from and to are required (YYYY-MM-DD)' });
+    }
+    const data = await reportService.getShiftsReport(fastify.db, from, to, branch_id ?? null);
+    reply.send(data);
+  });
 };
 
 export default reportRoutes;
