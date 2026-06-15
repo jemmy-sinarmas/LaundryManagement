@@ -1,4 +1,4 @@
-import type { ExpenseLevel, ExpensePaymentMethod, InventoryTransactionType, ItemType, MembershipType, OrderPaymentMethod, OrderStatus, UserRole } from './constants.js';
+import type { ExpenseLevel, ExpensePaymentMethod, InventoryTransactionType, ItemType, MembershipType, MessageTemplateType, OrderPaymentMethod, OrderStatus, UserRole } from './constants.js';
 export interface Branch {
     id: string;
     nama: string;
@@ -49,6 +49,20 @@ export interface AppSettings {
     ppnPercent: number;
     gratuityPercent: number;
     saldoAwalKas: number;
+    whatsappEnabled: boolean;
+    whatsappProvider: string;
+    whatsappApiUrl: string;
+    whatsappApiKey: string;
+    whatsappSender: string;
+}
+export interface MessageTemplate {
+    id: string;
+    type: MessageTemplateType;
+    header: string;
+    footer: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 interface MembershipBase {
     id: string;
@@ -196,5 +210,5 @@ export interface PaginatedResult<T> {
     page: number;
     limit: number;
 }
-export type { ExpenseLevel, ExpensePaymentMethod, InventoryTransactionType, ItemType, MembershipType, OrderPaymentMethod, OrderStatus, UserRole, };
+export type { ExpenseLevel, ExpensePaymentMethod, InventoryTransactionType, ItemType, MembershipType, MessageTemplateType, OrderPaymentMethod, OrderStatus, UserRole, };
 //# sourceMappingURL=types.d.ts.map

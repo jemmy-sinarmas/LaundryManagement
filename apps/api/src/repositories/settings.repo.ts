@@ -4,28 +4,38 @@ import type { SqlDb } from '../lib/db-types.js';
 type SettingsRow = { key: string; value: string };
 
 const CAMEL_TO_DB: Record<keyof AppSettings, string> = {
-  businessName:    'business_name',
-  businessAddress: 'business_address',
-  businessPhone:   'business_phone',
-  invoiceFooter:   'invoice_footer',
-  logoBase64:      'logo_base64',
-  ppnPercent:      'ppn_percent',
-  gratuityPercent: 'gratuity_percent',
-  saldoAwalKas:    'saldo_awal_kas',
+  businessName:     'business_name',
+  businessAddress:  'business_address',
+  businessPhone:    'business_phone',
+  invoiceFooter:    'invoice_footer',
+  logoBase64:       'logo_base64',
+  ppnPercent:       'ppn_percent',
+  gratuityPercent:  'gratuity_percent',
+  saldoAwalKas:     'saldo_awal_kas',
+  whatsappEnabled:  'whatsapp_enabled',
+  whatsappProvider: 'whatsapp_provider',
+  whatsappApiUrl:   'whatsapp_api_url',
+  whatsappApiKey:   'whatsapp_api_key',
+  whatsappSender:   'whatsapp_sender',
 };
 
 function rowsToSettings(rows: SettingsRow[]): AppSettings {
   const raw: Record<string, string> = {};
   for (const row of rows) raw[row.key] = row.value;
   return {
-    businessName:    raw['business_name']    ?? '',
-    businessAddress: raw['business_address'] ?? '',
-    businessPhone:   raw['business_phone']   ?? '',
-    invoiceFooter:   raw['invoice_footer']   ?? '',
-    logoBase64:      raw['logo_base64']      ?? '',
-    ppnPercent:      Number(raw['ppn_percent']      ?? 0),
-    gratuityPercent: Number(raw['gratuity_percent'] ?? 0),
-    saldoAwalKas:    Number(raw['saldo_awal_kas']   ?? 0),
+    businessName:     raw['business_name']    ?? '',
+    businessAddress:  raw['business_address'] ?? '',
+    businessPhone:    raw['business_phone']   ?? '',
+    invoiceFooter:    raw['invoice_footer']   ?? '',
+    logoBase64:       raw['logo_base64']      ?? '',
+    ppnPercent:       Number(raw['ppn_percent']      ?? 0),
+    gratuityPercent:  Number(raw['gratuity_percent'] ?? 0),
+    saldoAwalKas:     Number(raw['saldo_awal_kas']   ?? 0),
+    whatsappEnabled:  raw['whatsapp_enabled'] === 'true',
+    whatsappProvider: raw['whatsapp_provider'] ?? '',
+    whatsappApiUrl:   raw['whatsapp_api_url']  ?? '',
+    whatsappApiKey:   raw['whatsapp_api_key']  ?? '',
+    whatsappSender:   raw['whatsapp_sender']   ?? '',
   };
 }
 

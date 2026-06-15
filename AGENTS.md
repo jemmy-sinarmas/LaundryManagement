@@ -236,6 +236,12 @@ Skills activate automatically based on user intent. Files are in `docs/skills/`.
 
 Never commit `.env`. Use `.env.example` as template.
 
+WhatsApp integration config is **not** env-based — it lives in the `settings` table
+(`whatsapp_enabled`, `whatsapp_provider`, `whatsapp_api_url`, `whatsapp_api_key`,
+`whatsapp_sender`) and is editable in the admin UI. Sending is **disabled by default**: the
+`WhatsAppSender` log adapter records the rendered message and writes a `notification_log`
+row with status `skipped` instead of making a live call. See `docs/ARCHITECTURE.md` §9.
+
 ---
 
 ## Testing Standards

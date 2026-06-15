@@ -31,6 +31,12 @@ export type OrderPaymentMethod = (typeof ORDER_PAYMENT_METHODS)[number];
 export const EXPENSE_PAYMENT_METHODS = ['tunai', 'transfer'] as const;
 export type ExpensePaymentMethod = (typeof EXPENSE_PAYMENT_METHODS)[number];
 
+// WhatsApp message templates sent to customers:
+//  - payment_receipt: detailed invoice sent when payment is recorded at POS checkout
+//  - ready_for_collection: notice sent when an order reaches status 'siap_diambil'
+export const MESSAGE_TEMPLATE_TYPES = ['payment_receipt', 'ready_for_collection'] as const;
+export type MessageTemplateType = (typeof MESSAGE_TEMPLATE_TYPES)[number];
+
 export const PERIODIK_DISCOUNT_PERCENT = 10;
 export const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 

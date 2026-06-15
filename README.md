@@ -107,6 +107,22 @@ npm run build
 - ✅ Offline-capable POS (IndexedDB queue + Background Sync)
 - ✅ i18n: Bahasa Indonesia default, English toggle
 - ✅ PWA: installable on Android & iOS
+- ✅ WhatsApp receipt + ready-for-collection notifications (admin-editable templates; sending disabled by default — scaffold)
+
+---
+
+## WhatsApp Notifications (scaffold)
+
+Customers are automatically messaged on WhatsApp when payment is recorded (payment receipt)
+and when an order is marked ready for collection. Admins manage the two message templates at
+**`/message-templates`** (header/footer editable; order details rendered automatically).
+
+Sending is **disabled by default** — until a provider is configured the backend only *logs*
+the rendered message and records each attempt in the `notification_log` table. To enable, set
+the WhatsApp connection fields in **Settings → Koneksi WhatsApp** (stored as `whatsapp_*` keys
+in the `settings` table: `whatsapp_enabled`, `whatsapp_provider`, `whatsapp_api_url`,
+`whatsapp_api_key`, `whatsapp_sender`) and implement a real provider adapter in
+`apps/api/src/lib/whatsapp/adapters/`. See `docs/ARCHITECTURE.md` §9.
 
 ---
 

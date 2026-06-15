@@ -18,6 +18,7 @@ import settingsRoutes from './routes/settings/index.js';
 import branchRoutes from './routes/branches/index.js';
 import promotionRoutes from './routes/promotions/index.js';
 import shiftRoutes from './routes/shifts/index.js';
+import messageTemplateRoutes from './routes/message-templates/index.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -54,6 +55,7 @@ await fastify.register(settingsRoutes,        { prefix: '/api/v1/settings' });
 await fastify.register(branchRoutes,          { prefix: '/api/v1/branches' });
 await fastify.register(promotionRoutes,       { prefix: '/api/v1/promotions' });
 await fastify.register(shiftRoutes,           { prefix: '/api/v1/shifts' });
+await fastify.register(messageTemplateRoutes, { prefix: '/api/v1/message-templates' });
 
 fastify.get('/health', async () => ({ status: 'ok' }));
 

@@ -26,6 +26,7 @@
 │  │                  Service Layer                           ││
 │  │  UserSvc  CustomerSvc  MembershipSvc  OrderSvc           ││
 │  │  ItemSvc  ExpenseSvc   InventorySvc   ReportSvc          ││
+│  │  MessageTemplateSvc    NotificationSvc (→ WhatsApp)      ││
 │  └──────────────────────────────────────────────────────────┘│
 │  ┌──────────────────────────────────────────────────────────┐│
 │  │              Repository Layer (pg/postgres.js)           ││
@@ -418,6 +419,9 @@ All endpoints except `/api/v1/auth/login` and `/api/v1/track/*` require JWT in H
 | PATCH | /branches/:id | Admin | Update branch |
 | GET | /orders/pickup/:token | Kasir, Admin | Fetch order by pickup token |
 | PATCH | /orders/pickup/:token/complete | Kasir, Admin | Validate pickup → advance to selesai |
+| GET | /message-templates | Admin | List WhatsApp message templates |
+| GET | /message-templates/:type | Admin | Get one template (payment_receipt/ready_for_collection) |
+| PATCH | /message-templates/:type | Admin | Update editable header/footer/isActive |
 
 ---
 
@@ -456,3 +460,40 @@ Internet → nginx (TLS termination) → Next.js (port 3000) + Fastify (port 400
 - Process manager: PM2
 - Backup: cron `pg_dump` daily → `/var/backups/laundry-palu/`
 - Environment variables via `.env` (never committed)
+
+---
+
+## 9. WhatsApp Notifications (scaffold)
+
+Customers receive an automatic WhatsApp message at two points in the order lifecycle:
+
+1. **Payment receipt** — fired when an order is created at POS checkout (`POST /orders`).
+2. **Ready-for-collection** — fired when an order transitions to `siap_diambil`
+   (`PATCH /orders/:id/status`).
+
+Both are triggered **fire-and-forget from the order route handlers**, so a notification
+failure can never affect the order request/response. The flow:
+
+```
+order route ──> notification.service ──> render.ts (template + fixed body)
+                       │                        │
+                       │                        └─> message_templates (header/footer)
+                       └─> getSender(config) ──> WhatsAppSender adapter
+                                                   ├─ LogAdapter   (default: logs, "skipped")
+                                                   └─ HttpAdapter  (stub for a real gateway)
+                       └─> notification_log (audit: sent | skipped | failed)
+```
+
+- **Provider-agnostic sender** (`apps/api/src/lib/whatsapp/`): a `WhatsAppSender` interface
+  with `send(to, message)`. `getSender(config, logger)` returns the `HttpAdapter` when
+  `whatsapp_enabled` is true, otherwise the `LogAdapter`.
+- **Scaffold-only / disabled by default.** With `whatsapp_enabled = 'false'` (the seeded
+  default) no live HTTP call is made — the rendered message is logged and recorded in
+  `notification_log` as `skipped`. The `HttpAdapter` is a stub showing the intended
+  request shape (Fonnte/Wablas/Watzap/Meta map onto `send(to, message)`); wire a real
+  provider there and flip the flag to go live.
+- **Templates** are admin-editable for the **header** and **footer** only; the order-detail
+  body is a fixed layout rendered in `render.ts`. Content is Indonesian-only for now.
+- **Connection config** lives in the key-value `settings` table:
+  `whatsapp_enabled`, `whatsapp_provider`, `whatsapp_api_url`, `whatsapp_api_key`,
+  `whatsapp_sender`.

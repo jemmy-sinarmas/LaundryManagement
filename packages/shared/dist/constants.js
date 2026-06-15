@@ -14,6 +14,10 @@ export const INVENTORY_TRANSACTION_TYPES = ['masuk', 'keluar'];
 // Payment methods captured for the daily cash-position report (Laporan Posisi Harian)
 export const ORDER_PAYMENT_METHODS = ['tunai', 'qris', 'transfer_bca'];
 export const EXPENSE_PAYMENT_METHODS = ['tunai', 'transfer'];
+// WhatsApp message templates sent to customers:
+//  - payment_receipt: detailed invoice sent when payment is recorded at POS checkout
+//  - ready_for_collection: notice sent when an order reaches status 'siap_diambil'
+export const MESSAGE_TEMPLATE_TYPES = ['payment_receipt', 'ready_for_collection'];
 export const PERIODIK_DISCOUNT_PERCENT = 10;
 export const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 export const PAKET_KG_OPTIONS = [50, 100, 200];

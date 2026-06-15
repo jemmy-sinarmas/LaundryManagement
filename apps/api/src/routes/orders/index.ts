@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { CreateOrderSchema, UpdateStatusSchema, RevertStatusSchema } from '../../schemas/order.schema.js';
 import * as orderService from '../../services/order.service.js';
+import * as notificationService from '../../services/notification.service.js';
 import type { OrderStatus } from '@laundry-palu/shared';
 
 const orderRoutes: FastifyPluginAsync = async (fastify) => {
@@ -18,6 +19,10 @@ const orderRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const order = await orderService.createOrder(fastify.db, result.data, req.user.id, branchId);
       reply.code(201).send(order);
+      // Fire-and-forget: send the payment receipt over WhatsApp. Never blocks/affects the response.
+      void notificationService
+        .sendPaymentReceipt(fastify, order.id)
+        .catch((err: unknown) => fastify.log.error({ err }, 'sendPaymentReceipt failed'));
     } catch (err: unknown) {
       const e = err as { statusCode?: number; message?: string };
       reply.code(e.statusCode ?? 500).send({ error: e.message });
@@ -84,6 +89,12 @@ const orderRoutes: FastifyPluginAsync = async (fastify) => {
         result.data.catatan
       );
       reply.send(order);
+      // Fire-and-forget: notify the customer when their laundry is ready to be collected.
+      if (order.status === 'siap_diambil') {
+        void notificationService
+          .sendReadyForCollection(fastify, order.id)
+          .catch((err: unknown) => fastify.log.error({ err }, 'sendReadyForCollection failed'));
+      }
     } catch (err: unknown) {
       const e = err as { statusCode?: number; message?: string };
       reply.code(e.statusCode ?? 500).send({ error: e.message });

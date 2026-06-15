@@ -14,6 +14,8 @@ export declare const ORDER_PAYMENT_METHODS: readonly ["tunai", "qris", "transfer
 export type OrderPaymentMethod = (typeof ORDER_PAYMENT_METHODS)[number];
 export declare const EXPENSE_PAYMENT_METHODS: readonly ["tunai", "transfer"];
 export type ExpensePaymentMethod = (typeof EXPENSE_PAYMENT_METHODS)[number];
+export declare const MESSAGE_TEMPLATE_TYPES: readonly ["payment_receipt", "ready_for_collection"];
+export type MessageTemplateType = (typeof MESSAGE_TEMPLATE_TYPES)[number];
 export declare const PERIODIK_DISCOUNT_PERCENT = 10;
 export declare const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 export declare const PAKET_KG_OPTIONS: readonly [50, 100, 200];

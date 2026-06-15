@@ -151,6 +151,14 @@ Diterima → Dicuci → Dikeringkan → Dibungkus → Siap Diambil → Selesai
 - FIFO cost valuation
 - Consumption history
 
+### 4.13 WhatsApp Notifications (v1.4)
+
+- Customers automatically receive a WhatsApp message at two points:
+  1. **Payment receipt** — when the kasir records payment at POS checkout (`POST /orders`). The message reproduces the printed receipt layout (invoice no, date, creator, customer block, payment method, item lines with discounts, totals).
+  2. **Ready for collection** — when an order reaches `siap_diambil`.
+- **Admin template module** (`/message-templates`, admin-only): manage two templates (`payment_receipt`, `ready_for_collection`). Admins edit the **header** and **footer / Syarat & Ketentuan** text and an active toggle; the order-detail body is a fixed system-rendered layout. A live preview shows the final message. Placeholders supported: `{business_name}`, `{business_phone}`, `{customer_name}`, `{invoice_no}`, `{total}`.
+- **Scaffold-first / Indonesian-only.** Sending is provider-agnostic and disabled by default — the backend logs the rendered message and records every attempt in `notification_log` (status `skipped`/`sent`/`failed`). A real provider (e.g. Fonnte/Wablas/Watzap/Meta) is wired in later via the `WhatsAppSender` adapter and the `whatsapp_*` settings. Notifications are fire-and-forget and never block or fail the order flow.
+
 ---
 
 ## 5. Non-Functional Requirements
@@ -171,7 +179,7 @@ Diterima → Dicuci → Dikeringkan → Dibungkus → Siap Diambil → Selesai
 ## 6. Out of Scope (v1.0)
 
 - Online payment gateway integration
-- WhatsApp notification (planned v1.1)
+- Live WhatsApp delivery via a real provider (scaffold shipped in v1.4; see §4.13 — sending disabled by default until a provider adapter is wired)
 - Customer mobile app (native iOS/Android)
 - Loyalty points beyond current membership model
 

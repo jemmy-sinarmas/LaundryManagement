@@ -7,7 +7,7 @@ const PUBLIC_PREFIXES = ['/login', '/track', '/_next', '/favicon.ico'];
 // Routes only admins may visit
 const ADMIN_ONLY_PREFIXES = [
   '/dashboard', '/users', '/customers', '/items',
-  '/expenses', '/inventory', '/reports',
+  '/expenses', '/inventory', '/reports', '/message-templates',
 ];
 
 export async function middleware(req: NextRequest) {

@@ -16,6 +16,10 @@ users ──────────────────────< orders
   └── inventory_transactions >── inventory_items
 
 orders ──< order_status_history
+orders ──< notification_log        (WhatsApp send/skip/fail audit)
+
+message_templates                  (standalone; payment_receipt + ready_for_collection)
+settings                           (key-value; includes whatsapp_* connection config)
 ```
 
 ## Table Summary
@@ -33,6 +37,8 @@ orders ──< order_status_history
 | `expenses` | Operational expenses | Optional link to inventory item for stock deduction |
 | `inventory_items` | Supply stock tracker | `harga_rata_fifo` recalculated on each 'masuk' transaction |
 | `inventory_transactions` | FIFO ledger for stock in/out | `tipe` CHECK (masuk/keluar) |
+| `message_templates` | Editable WhatsApp message templates | `type` UNIQUE + CHECK (payment_receipt/ready_for_collection); `header`/`footer` editable, body fixed |
+| `notification_log` | Audit of every WhatsApp notification attempt | `status` = skipped/sent/failed; optional `order_id` FK |
 
 ## Key Business Rules Reflected in Schema
 
@@ -41,3 +47,4 @@ orders ──< order_status_history
 - **Order lifecycle:** `status` column is forward-only. Enforced in application layer, not DB.
 - **Membership discount:** Applied at order creation time; stored as `diskon_persen` + `diskon_amount` snapshot on the order.
 - **Price snapshot:** `order_items` stores `nama_item`, `tipe`, `harga` at time of order so historical orders are unaffected by price changes.
+- **WhatsApp notifications:** A payment receipt is sent when an order is created (POS checkout); a ready-for-collection notice is sent when an order reaches `siap_diambil`. Sending is scaffold-only and disabled by default (`settings.whatsapp_enabled = 'false'`) — the sender logs the rendered message and records it in `notification_log` with status `skipped`. See `docs/ARCHITECTURE.md` §9.

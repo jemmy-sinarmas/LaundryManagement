@@ -4,6 +4,7 @@ import type {
   InventoryTransactionType,
   ItemType,
   MembershipType,
+  MessageTemplateType,
   OrderPaymentMethod,
   OrderStatus,
   UserRole,
@@ -63,6 +64,25 @@ export interface AppSettings {
   ppnPercent: number;
   gratuityPercent: number;
   saldoAwalKas: number;
+  // WhatsApp integration (scaffold). When whatsappEnabled is false the sender logs the
+  // rendered message instead of making a live HTTP call.
+  whatsappEnabled: boolean;
+  whatsappProvider: string;
+  whatsappApiUrl: string;
+  whatsappApiKey: string;
+  whatsappSender: string;
+}
+
+// Editable WhatsApp message template. The order-detail body is a fixed layout rendered by
+// the backend; only `header` and `footer` are admin-editable (may contain {placeholders}).
+export interface MessageTemplate {
+  id: string;
+  type: MessageTemplateType;
+  header: string;
+  footer: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface MembershipBase {
@@ -233,6 +253,7 @@ export type {
   InventoryTransactionType,
   ItemType,
   MembershipType,
+  MessageTemplateType,
   OrderPaymentMethod,
   OrderStatus,
   UserRole,

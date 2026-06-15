@@ -13,6 +13,7 @@ import {
   GitBranch,
   ClipboardList,
   Tag,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: '/reports',     label: 'Laporan',      icon: BarChart3 },
   { href: '/branches',    label: 'Cabang',       icon: GitBranch },
   { href: '/users',       label: 'Pengguna',     icon: UserCog },
+  { href: '/message-templates', label: 'Template WA', icon: MessageCircle },
   { href: '/settings',    label: 'Pengaturan',   icon: Settings },
 ];
 
