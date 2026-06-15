@@ -25,6 +25,16 @@ const reportRoutes: FastifyPluginAsync = async (fastify) => {
     reply.send(data);
   });
 
+  fastify.get('/daily-position', adminOnly, async (req, reply) => {
+    const { date: dateParam, branch_id } = req.query as { date?: string; branch_id?: string };
+    const date = dateParam ?? new Date().toISOString().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return reply.code(400).send({ error: 'Invalid date format, use YYYY-MM-DD' });
+    }
+    const data = await reportService.getDailyPosition(fastify.db, date, branch_id ?? null);
+    reply.send(data);
+  });
+
   fastify.get('/monthly', adminOnly, async (req, reply) => {
     const { year: yearStr, month: monthStr, branch_id } = req.query as { year?: string; month?: string; branch_id?: string };
     const year = Number(yearStr);

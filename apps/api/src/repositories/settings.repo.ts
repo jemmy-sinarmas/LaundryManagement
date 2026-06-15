@@ -11,6 +11,7 @@ const CAMEL_TO_DB: Record<keyof AppSettings, string> = {
   logoBase64:      'logo_base64',
   ppnPercent:      'ppn_percent',
   gratuityPercent: 'gratuity_percent',
+  saldoAwalKas:    'saldo_awal_kas',
 };
 
 function rowsToSettings(rows: SettingsRow[]): AppSettings {
@@ -24,6 +25,7 @@ function rowsToSettings(rows: SettingsRow[]): AppSettings {
     logoBase64:      raw['logo_base64']      ?? '',
     ppnPercent:      Number(raw['ppn_percent']      ?? 0),
     gratuityPercent: Number(raw['gratuity_percent'] ?? 0),
+    saldoAwalKas:    Number(raw['saldo_awal_kas']   ?? 0),
   };
 }
 

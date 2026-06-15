@@ -137,6 +137,8 @@ export default function PosPage() {
     selectedCustomer, selectCustomer,
     discountPercent,
     selectedPromo, setSelectedPromo,
+    metodePembayaran, setMetodePembayaran,
+    jumlahDibayar, setJumlahDibayar,
     cart, addToCart, updateQty, removeFromCart,
     subtotal, diskonAmount, promoDiskonAmount, total,
     createdOrder, clearCreatedOrder,
@@ -373,6 +375,52 @@ export default function PosPage() {
               <span>Total</span>
               <span>{formatIDR(total)}</span>
             </div>
+          </div>
+
+          {/* Payment method */}
+          <div>
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
+              Metode Pembayaran
+            </p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {([['tunai', 'Tunai'], ['qris', 'QRIS'], ['transfer_bca', 'TRF BCA']] as const).map(
+                ([m, label]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMetodePembayaran(m)}
+                    className={`rounded border px-2 py-2 text-xs font-medium transition-colors ${
+                      metodePembayaran === m
+                        ? 'border-blue-500 bg-blue-50 text-blue-800'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+
+          {/* Amount paid (leave blank for full payment) */}
+          <div>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+              Jumlah Dibayar
+            </label>
+            <input
+              type="number"
+              min={0}
+              placeholder={`Penuh (${formatIDR(total)})`}
+              value={jumlahDibayar ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                setJumlahDibayar(v === '' ? null : Math.max(0, Math.floor(Number(v))));
+              }}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            />
+            {jumlahDibayar !== null && jumlahDibayar < total && (
+              <p className="mt-1 text-xs text-amber-600">Piutang: {formatIDR(total - jumlahDibayar)}</p>
+            )}
           </div>
 
           <input

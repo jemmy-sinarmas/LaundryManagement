@@ -7,6 +7,11 @@ const REPORTS = [
     description: 'Ringkasan penjualan dan pengeluaran per hari',
   },
   {
+    href: '/reports/daily-position',
+    title: 'Laporan Posisi Harian',
+    description: 'Posisi kas, piutang, dan rekap transaksi harian',
+  },
+  {
     href: '/reports/monthly',
     title: 'Laporan Bulanan',
     description: 'Rekap pendapatan dan pengeluaran per bulan',

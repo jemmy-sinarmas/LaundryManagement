@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  /* Print colours/backgrounds faithfully (table borders, highlighted rows) */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* The admin shell uses h-screen + overflow-hidden, which clips print output.
+     Let the document flow naturally when printing. */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Avoid breaking report tables across pages mid-row */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+}

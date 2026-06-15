@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { ExpenseCategory, InventoryItem } from '@laundry-palu/shared';
+import type { ExpenseCategory, ExpensePaymentMethod, InventoryItem } from '@laundry-palu/shared';
 
 type Props = {
   categories: ExpenseCategory[];
@@ -12,6 +12,7 @@ type Props = {
     deskripsi?: string | null;
     inventoryItemId?: string | null;
     qtyUsed?: number | null;
+    metodePembayaran?: ExpensePaymentMethod;
   }) => Promise<void>;
   onCancel?: () => void;
 };
@@ -24,6 +25,7 @@ export default function ExpenseForm({ categories, inventoryItems, onSubmit, onCa
   const [deskripsi, setDeskripsi] = useState('');
   const [inventoryItemId, setInventoryItemId] = useState('');
   const [qtyUsed, setQtyUsed] = useState('');
+  const [metodePembayaran, setMetodePembayaran] = useState<ExpensePaymentMethod>('tunai');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +47,7 @@ export default function ExpenseForm({ categories, inventoryItems, onSubmit, onCa
         deskripsi: deskripsi || null,
         inventoryItemId: inventoryItemId || null,
         qtyUsed: inventoryItemId && qtyUsed ? parseFloat(qtyUsed) : null,
+        metodePembayaran,
       });
       // Reset form
       setJumlah('');
@@ -52,6 +55,7 @@ export default function ExpenseForm({ categories, inventoryItems, onSubmit, onCa
       setDeskripsi('');
       setInventoryItemId('');
       setQtyUsed('');
+      setMetodePembayaran('tunai');
       setTanggal(today);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan pengeluaran');
@@ -108,6 +112,26 @@ export default function ExpenseForm({ categories, inventoryItems, onSubmit, onCa
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Metode Pembayaran</label>
+        <div className="grid grid-cols-2 gap-2">
+          {([['tunai', 'Tunai'], ['transfer', 'Transfer']] as const).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMetodePembayaran(m)}
+              className={`rounded border px-3 py-2 text-sm font-medium transition-colors ${
+                metodePembayaran === m
+                  ? 'border-blue-500 bg-blue-50 text-blue-800'
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>

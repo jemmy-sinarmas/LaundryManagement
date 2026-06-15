@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Item } from '@laundry-palu/shared';
+import type { Item, OrderPaymentMethod } from '@laundry-palu/shared';
 
 export type CartItem = { item: Item; qty: number };
 
@@ -8,6 +8,8 @@ export type PendingOrder = {
   timestamp: number;
   customerId: string;
   catatan: string | null;
+  metodePembayaran: OrderPaymentMethod;
+  jumlahDibayar?: number;
   items: { itemId: string; qty: number }[];
 };
 

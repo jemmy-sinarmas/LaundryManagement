@@ -354,3 +354,52 @@ INSERT INTO inventory_transactions (item_id, tipe, qty, harga_per_unit, referens
   -- Kartu Nama: 100 -60 = 40 (low) ; avg 1000
   ('de100000-0000-0000-0000-000000000005', 'masuk',  100, 1000, 'Pembelian awal stok',  'a1000000-0000-0000-0000-000000000001', NOW()-INTERVAL '20 days'),
   ('de100000-0000-0000-0000-000000000005', 'keluar', 60,  NULL, 'Pemakaian operasional','a1000000-0000-0000-0000-000000000002', NOW()-INTERVAL '8 days');
+
+-- ============================================================
+-- BRANCH (v1.1) — a default outlet so the POS/order flow is usable out of the box.
+-- Admin stays branch_id NULL (super-admin / full access per migration 008).
+-- ============================================================
+INSERT INTO branches (id, nama, kode, alamat) VALUES
+  ('0b100000-0000-0000-0000-000000000001', 'Cabang Utama', 'PLU', 'Jl. Sudirman No. 1, Palu')
+ON CONFLICT DO NOTHING;
+
+-- Lock the kasir users to the default branch (required to create orders).
+UPDATE users SET branch_id = '0b100000-0000-0000-0000-000000000001'
+ WHERE username IN ('kasir1', 'kasir2', 'kasir3');
+
+-- Attribute existing seeded data to the default branch (items/inventory are branch-scoped
+-- in v1.1, so a kasir locked to a branch only sees rows tagged with that branch).
+UPDATE orders          SET branch_id = '0b100000-0000-0000-0000-000000000001' WHERE branch_id IS NULL;
+UPDATE expenses        SET branch_id = '0b100000-0000-0000-0000-000000000001' WHERE branch_id IS NULL;
+UPDATE items           SET branch_id = '0b100000-0000-0000-0000-000000000001' WHERE branch_id IS NULL;
+UPDATE inventory_items SET branch_id = '0b100000-0000-0000-0000-000000000001' WHERE branch_id IS NULL;
+
+-- ============================================================
+-- PAYMENT CAPTURE demo data (Laporan Posisi Harian).
+-- NOTE: migration 016 runs BEFORE this seed, so its `jumlah_dibayar = total`
+-- backfill ran against an empty table — set it here for the seeded orders.
+-- ============================================================
+UPDATE orders SET jumlah_dibayar = total;
+
+-- Spread payment methods deterministically for report variety (md5 → no integer cast).
+UPDATE orders SET metode_pembayaran = 'qris'         WHERE left(md5(id::text), 1) IN ('0','1','2','3','4');
+UPDATE orders SET metode_pembayaran = 'transfer_bca' WHERE left(md5(id::text), 1) IN ('5','6');
+-- remainder stays the default 'tunai'
+
+-- Two historical receivables for the cumulative PIUTANG figure.
+UPDATE orders SET jumlah_dibayar = total - 75000
+ WHERE id IN ('f1000000-0000-0000-0000-000000000001', 'f1000000-0000-0000-0000-000000000002');
+
+-- A handful of *today's* transactions so the daily section is populated.
+UPDATE orders SET created_at = NOW(), metode_pembayaran = 'qris',         jumlah_dibayar = total
+ WHERE id = 'f1000000-0000-0000-0000-000000000003';
+UPDATE orders SET created_at = NOW(), metode_pembayaran = 'transfer_bca', jumlah_dibayar = total
+ WHERE id = 'f1000000-0000-0000-0000-000000000004';
+UPDATE orders SET created_at = NOW(), metode_pembayaran = 'tunai',        jumlah_dibayar = total - 50000
+ WHERE id = 'f1000000-0000-0000-0000-000000000005';
+
+-- One transfer expense for the TRF KELUAR line (rest stay default 'tunai').
+UPDATE expenses SET metode_pembayaran = 'transfer' WHERE left(md5(id::text), 1) IN ('0','1');
+
+-- Opening cash balance baseline for the KAS position.
+UPDATE settings SET value = '5000000' WHERE key = 'saldo_awal_kas';

@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { usePosStore } from '@/store/posStore';
-import type { Customer, Item, MembershipValidationResult, Order, Promotion } from '@laundry-palu/shared';
+import type {
+  Customer,
+  Item,
+  MembershipValidationResult,
+  Order,
+  OrderPaymentMethod,
+  Promotion,
+} from '@laundry-palu/shared';
 
 export function usePOS() {
   const [items, setItems] = useState<Item[]>([]);
@@ -11,6 +18,9 @@ export function usePOS() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
+  const [metodePembayaran, setMetodePembayaran] = useState<OrderPaymentMethod>('tunai');
+  // null => paid in full (omit jumlahDibayar so the API defaults it to total)
+  const [jumlahDibayar, setJumlahDibayar] = useState<number | null>(null);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -73,6 +83,8 @@ export function usePOS() {
       customerId: selectedCustomer.id,
       catatan: catatan ?? null,
       promoId: selectedPromo?.id,
+      metodePembayaran,
+      ...(jumlahDibayar !== null ? { jumlahDibayar } : {}),
       items: cart.map((c) => ({ itemId: c.item.id, qty: c.qty })),
     };
 
@@ -83,6 +95,8 @@ export function usePOS() {
       setSelectedCustomer(null);
       setDiscountPercent(0);
       setSelectedPromo(null);
+      setMetodePembayaran('tunai');
+      setJumlahDibayar(null);
       setCreatedOrder(order);
       return order;
     } catch {
@@ -108,6 +122,10 @@ export function usePOS() {
     discountPercent,
     selectedPromo,
     setSelectedPromo,
+    metodePembayaran,
+    setMetodePembayaran,
+    jumlahDibayar,
+    setJumlahDibayar,
     cart,
     addToCart,
     updateQty,

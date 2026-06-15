@@ -41,6 +41,20 @@ export type IncomeStatementData = {
   netProfit: number;
 };
 
+export type DailyPositionData = {
+  date: string;
+  kas: number;
+  piutang: number;
+  kasMasuk: number;
+  kasKeluar: number;
+  trfMasuk: number;
+  trfMasukQris: number;
+  trfMasukBca: number;
+  trfKeluar: number;
+  totalOmset: number;
+  totalBiaya: number;
+};
+
 // ---- Hooks ----
 
 export function useDashboard() {
@@ -78,6 +92,29 @@ export function useDailyReport(date: string) {
       setData(result);
     } catch {
       setError('Gagal memuat laporan harian');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void fetch(date); }, [fetch, date]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+export function useDailyPosition(date: string) {
+  const [data, setData] = useState<DailyPositionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = useCallback(async (d: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await api.get<DailyPositionData>(`/api/v1/reports/daily-position?date=${d}`);
+      setData(result);
+    } catch {
+      setError('Gagal memuat laporan posisi harian');
     } finally {
       setLoading(false);
     }

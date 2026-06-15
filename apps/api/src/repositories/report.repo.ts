@@ -645,3 +645,77 @@ export async function getInventorySnapshot(
     updatedAt: r.updated_at,
   }));
 }
+
+// ---- Daily cash position (Laporan Posisi Harian) ----
+// branchId === null => all branches; otherwise scoped to that branch.
+
+export async function getCashPosition(
+  db: SqlDb,
+  date: string,
+  branchId: string | null
+): Promise<{ cashInCum: number; cashOutCum: number; piutangCum: number }> {
+  const orderRows = await db<{ cash_in_cum: number | string; piutang_cum: number | string }>`
+    SELECT
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'tunai' THEN jumlah_dibayar ELSE 0 END), 0) AS cash_in_cum,
+      COALESCE(SUM(total - jumlah_dibayar), 0) AS piutang_cum
+    FROM orders
+    WHERE DATE(created_at AT TIME ZONE 'UTC') <= ${date}::date
+      AND (${branchId}::uuid IS NULL OR branch_id = ${branchId})
+  `;
+  const expenseRows = await db<{ cash_out_cum: number | string }>`
+    SELECT COALESCE(SUM(jumlah), 0) AS cash_out_cum
+    FROM expenses
+    WHERE metode_pembayaran = 'tunai' AND tanggal <= ${date}::date
+      AND (${branchId}::uuid IS NULL OR branch_id = ${branchId})
+  `;
+  return {
+    cashInCum: Number(orderRows[0]?.cash_in_cum ?? 0),
+    piutangCum: Number(orderRows[0]?.piutang_cum ?? 0),
+    cashOutCum: Number(expenseRows[0]?.cash_out_cum ?? 0),
+  };
+}
+
+export async function getDailyTransactions(
+  db: SqlDb,
+  date: string,
+  branchId: string | null
+): Promise<{
+  omset: number;
+  cashIn: number;
+  qrisIn: number;
+  bcaIn: number;
+  cashOut: number;
+  transferOut: number;
+}> {
+  const orderRows = await db<{
+    omset: number | string;
+    cash_in: number | string;
+    qris_in: number | string;
+    bca_in: number | string;
+  }>`
+    SELECT
+      COALESCE(SUM(total), 0) AS omset,
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'tunai' THEN jumlah_dibayar ELSE 0 END), 0) AS cash_in,
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'qris' THEN jumlah_dibayar ELSE 0 END), 0) AS qris_in,
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'transfer_bca' THEN jumlah_dibayar ELSE 0 END), 0) AS bca_in
+    FROM orders
+    WHERE DATE(created_at AT TIME ZONE 'UTC') = ${date}::date
+      AND (${branchId}::uuid IS NULL OR branch_id = ${branchId})
+  `;
+  const expenseRows = await db<{ cash_out: number | string; transfer_out: number | string }>`
+    SELECT
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'tunai' THEN jumlah ELSE 0 END), 0) AS cash_out,
+      COALESCE(SUM(CASE WHEN metode_pembayaran = 'transfer' THEN jumlah ELSE 0 END), 0) AS transfer_out
+    FROM expenses
+    WHERE tanggal = ${date}::date
+      AND (${branchId}::uuid IS NULL OR branch_id = ${branchId})
+  `;
+  return {
+    omset: Number(orderRows[0]?.omset ?? 0),
+    cashIn: Number(orderRows[0]?.cash_in ?? 0),
+    qrisIn: Number(orderRows[0]?.qris_in ?? 0),
+    bcaIn: Number(orderRows[0]?.bca_in ?? 0),
+    cashOut: Number(expenseRows[0]?.cash_out ?? 0),
+    transferOut: Number(expenseRows[0]?.transfer_out ?? 0),
+  };
+}

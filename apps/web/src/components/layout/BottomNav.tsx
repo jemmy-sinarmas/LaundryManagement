@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/pos',    label: 'Kasir',   icon: ShoppingCart },
-  { href: '/orders', label: 'Pesanan', icon: ClipboardList },
+  { href: '/antrian', label: 'Pesanan', icon: ClipboardList },
   { href: '/shift',  label: 'Shift',   icon: Clock },
 ];
 

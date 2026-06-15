@@ -24,6 +24,13 @@ export type UserRole = (typeof USER_ROLES)[number];
 export const INVENTORY_TRANSACTION_TYPES = ['masuk', 'keluar'] as const;
 export type InventoryTransactionType = (typeof INVENTORY_TRANSACTION_TYPES)[number];
 
+// Payment methods captured for the daily cash-position report (Laporan Posisi Harian)
+export const ORDER_PAYMENT_METHODS = ['tunai', 'qris', 'transfer_bca'] as const;
+export type OrderPaymentMethod = (typeof ORDER_PAYMENT_METHODS)[number];
+
+export const EXPENSE_PAYMENT_METHODS = ['tunai', 'transfer'] as const;
+export type ExpensePaymentMethod = (typeof EXPENSE_PAYMENT_METHODS)[number];
+
 export const PERIODIK_DISCOUNT_PERCENT = 10;
 export const PAKET_KG_LOW_BALANCE_THRESHOLD = 5;
 

@@ -68,7 +68,7 @@ export default function PickupPage() {
           <p className="mt-1 text-sm text-gray-500">{error}</p>
         </div>
         <button
-          onClick={() => router.push('/orders')}
+          onClick={() => router.push('/antrian')}
           className="rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
         >
           Cari Pesanan Manual
@@ -139,7 +139,7 @@ export default function PickupPage() {
               <p className="mt-1 text-sm text-green-700">Pesanan telah diserahkan ke pelanggan.</p>
             </div>
             <button
-              onClick={() => router.push('/orders')}
+              onClick={() => router.push('/antrian')}
               className="mt-2 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               Kembali ke Pesanan
@@ -172,7 +172,7 @@ export default function PickupPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/orders')}
+              onClick={() => router.push('/antrian')}
               className="mt-2 rounded border border-amber-400 bg-white px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50"
             >
               Lihat Daftar Pesanan
@@ -185,7 +185,7 @@ export default function PickupPage() {
       {!isDone && !success && (
         <p className="mt-4 text-center text-xs text-gray-400">
           Jika pelanggan kehilangan struk, cari pesanan melalui nomor HP atau invoice di halaman{' '}
-          <button onClick={() => router.push('/orders')} className="text-blue-500 underline">
+          <button onClick={() => router.push('/antrian')} className="text-blue-500 underline">
             Daftar Pesanan
           </button>
           .

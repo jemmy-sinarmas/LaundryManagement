@@ -1,8 +1,10 @@
 import type {
   ExpenseLevel,
+  ExpensePaymentMethod,
   InventoryTransactionType,
   ItemType,
   MembershipType,
+  OrderPaymentMethod,
   OrderStatus,
   UserRole,
 } from './constants.js';
@@ -60,6 +62,7 @@ export interface AppSettings {
   logoBase64: string;
   ppnPercent: number;
   gratuityPercent: number;
+  saldoAwalKas: number;
 }
 
 interface MembershipBase {
@@ -134,6 +137,8 @@ export interface Order {
   gratuityAmount: number;
   ppnAmount: number;
   total: number;
+  metodePembayaran: OrderPaymentMethod;
+  jumlahDibayar: number;
   status: OrderStatus;
   catatan: string | null;
   branchId: string | null;
@@ -162,6 +167,7 @@ export interface Expense {
   inventoryItemId: string | null;
   qtyUsed: number | null;
   branchId: string | null;
+  metodePembayaran: ExpensePaymentMethod;
   createdBy: string | null;
   createdAt: string;
   category?: Pick<ExpenseCategory, 'id' | 'nama' | 'level'>;
@@ -221,4 +227,13 @@ export interface PaginatedResult<T> {
 }
 
 // Re-export type aliases from constants for convenience
-export type { ExpenseLevel, InventoryTransactionType, ItemType, MembershipType, OrderStatus, UserRole };
+export type {
+  ExpenseLevel,
+  ExpensePaymentMethod,
+  InventoryTransactionType,
+  ItemType,
+  MembershipType,
+  OrderPaymentMethod,
+  OrderStatus,
+  UserRole,
+};

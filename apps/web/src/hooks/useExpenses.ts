@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
-import type { Expense, ExpenseCategory, InventoryItem } from '@laundry-palu/shared';
+import type { Expense, ExpenseCategory, ExpensePaymentMethod, InventoryItem } from '@laundry-palu/shared';
 
 export function useExpenses(filters?: { from?: string; to?: string; categoryId?: string }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -43,6 +43,7 @@ export function useExpenses(filters?: { from?: string; to?: string; categoryId?:
     deskripsi?: string | null;
     inventoryItemId?: string | null;
     qtyUsed?: number | null;
+    metodePembayaran?: ExpensePaymentMethod;
   }): Promise<Expense> {
     const expense = await api.post<Expense>('/api/v1/expenses', data);
     setExpenses((prev) => [expense, ...prev]);

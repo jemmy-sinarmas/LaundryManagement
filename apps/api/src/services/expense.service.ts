@@ -46,6 +46,7 @@ export async function createExpense(
     inventoryItemId,
     qtyUsed,
     branchId,
+    metodePembayaran: data.metodePembayaran,
     createdBy: userId,
   });
 }

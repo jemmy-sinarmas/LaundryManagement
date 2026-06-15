@@ -15,6 +15,8 @@ type OrderRow = {
   promo_id: string | null;
   promo_diskon_amount: number | bigint;
   total: number | bigint;
+  metode_pembayaran: string;
+  jumlah_dibayar: number | bigint;
   status: string;
   catatan: string | null;
   branch_id: string | null;
@@ -88,6 +90,8 @@ function mapOrder(row: OrderRow): Order {
     gratuityAmount: Number(row.gratuity_amount),
     ppnAmount: Number(row.ppn_amount),
     total: Number(row.total),
+    metodePembayaran: row.metode_pembayaran as Order['metodePembayaran'],
+    jumlahDibayar: Number(row.jumlah_dibayar),
     status: row.status as OrderStatus,
     catatan: row.catatan,
     branchId: row.branch_id ?? null,
@@ -113,6 +117,8 @@ export async function create(
     gratuityAmount: number;
     ppnAmount: number;
     total: number;
+    metodePembayaran: Order['metodePembayaran'];
+    jumlahDibayar: number;
     catatan: string | null;
     branchId: string;
     createdBy: string | null;
@@ -131,12 +137,14 @@ export async function create(
     INSERT INTO orders
       (id, invoice_no, customer_id, membership_id, diskon_persen,
        subtotal, diskon_amount, promo_id, promo_diskon_amount,
-       ppn_amount, gratuity_amount, total, status, catatan, branch_id, created_by)
+       ppn_amount, gratuity_amount, total, metode_pembayaran, jumlah_dibayar,
+       status, catatan, branch_id, created_by)
     VALUES
       (${data.id}, ${data.invoiceNo}, ${data.customerId}, ${data.membershipId},
        ${data.diskonPersen}, ${data.subtotal}, ${data.diskonAmount},
        ${data.promoId}, ${data.promoDiskonAmount},
        ${data.ppnAmount}, ${data.gratuityAmount}, ${data.total},
+       ${data.metodePembayaran}, ${data.jumlahDibayar},
        'diterima', ${data.catatan}, ${data.branchId}, ${data.createdBy})
     RETURNING *
   `;

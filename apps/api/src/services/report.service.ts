@@ -1,6 +1,7 @@
 import type { SqlDb } from '../lib/db-types.js';
 import * as reportRepo from '../repositories/report.repo.js';
 import * as inventoryRepo from '../repositories/inventory.repo.js';
+import * as settingsRepo from '../repositories/settings.repo.js';
 import type {
   DashboardData,
   DailyReportData,
@@ -11,6 +12,7 @@ import type {
   TransactionsReportData,
   InvoicesReportData,
   ShiftsReportData,
+  DailyPositionData,
 } from '../types/reports.js';
 
 // ---- Pure functions (unit-test targets) ----
@@ -186,4 +188,32 @@ export async function getInventoryReport(db: SqlDb, branchId?: string | null): P
   }));
   const totalStockValue = items.reduce((s, i) => s + i.stockValue, 0);
   return { items, totalStockValue };
+}
+
+export async function getDailyPosition(
+  db: SqlDb,
+  date: string,
+  branchId: string | null
+): Promise<DailyPositionData> {
+  const [settings, position, day] = await Promise.all([
+    settingsRepo.getAll(db),
+    reportRepo.getCashPosition(db, date, branchId),
+    reportRepo.getDailyTransactions(db, date, branchId),
+  ]);
+  const kas = settings.saldoAwalKas + position.cashInCum - position.cashOutCum;
+  const trfMasuk = day.qrisIn + day.bcaIn;
+  const totalBiaya = day.cashOut + day.transferOut;
+  return {
+    date,
+    kas,
+    piutang: position.piutangCum,
+    kasMasuk: day.cashIn,
+    kasKeluar: day.cashOut,
+    trfMasuk,
+    trfMasukQris: day.qrisIn,
+    trfMasukBca: day.bcaIn,
+    trfKeluar: day.transferOut,
+    totalOmset: day.omset,
+    totalBiaya,
+  };
 }

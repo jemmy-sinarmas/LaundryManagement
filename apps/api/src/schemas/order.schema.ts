@@ -1,10 +1,12 @@
 import { z } from 'zod';
-import { ORDER_STATUSES } from '@laundry-palu/shared';
+import { ORDER_STATUSES, ORDER_PAYMENT_METHODS } from '@laundry-palu/shared';
 
 export const CreateOrderSchema = z.object({
   customerId: z.string().uuid(),
   catatan: z.string().nullable().optional(),
   promoId: z.string().uuid().optional(),
+  metodePembayaran: z.enum(ORDER_PAYMENT_METHODS).default('tunai'),
+  jumlahDibayar: z.number().int().nonnegative().optional(),
   items: z
     .array(
       z.object({

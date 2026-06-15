@@ -104,3 +104,20 @@ export type ShiftsReportData = {
   to: string;
   shifts: ShiftReportItem[];
 };
+
+// Daily cash-position report (Laporan Posisi Harian)
+export type DailyPositionData = {
+  date: string;
+  // Position as of date
+  kas: number;
+  piutang: number;
+  // Daily transactions
+  kasMasuk: number;
+  kasKeluar: number;
+  trfMasuk: number;
+  trfMasukQris: number;
+  trfMasukBca: number;
+  trfKeluar: number;
+  totalOmset: number;
+  totalBiaya: number;
+};

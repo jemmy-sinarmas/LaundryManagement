@@ -108,6 +108,8 @@ export async function createOrder(
     diskonPersen: discountPercent,
     promoId,
     ...totals,
+    metodePembayaran: data.metodePembayaran,
+    jumlahDibayar: data.jumlahDibayar ?? totals.total,
     catatan: data.catatan ?? null,
     branchId,
     createdBy: userId,
