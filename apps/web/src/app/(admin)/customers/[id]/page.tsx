@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useCustomer } from '@/hooks/useCustomers';
 import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import MembershipBadge from '@/components/membership/MembershipBadge';
 import MembershipForm from '@/components/membership/MembershipForm';
 import { formatDate } from '@/lib/utils';
@@ -17,6 +18,7 @@ export default function CustomerDetailPage() {
   async function handleCreateMembership(data: object) {
     await createMembership(data);
     setShowMembershipForm(false);
+    toast.success(t.customers.membership_create_success);
   }
 
   if (loading) {

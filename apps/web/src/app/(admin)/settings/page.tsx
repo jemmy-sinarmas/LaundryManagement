@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import type { AppSettings, Order } from '@laundry-palu/shared';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
 
@@ -41,8 +42,6 @@ export default function SettingsPage() {
   const { t } = useLangStore();
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,15 +62,12 @@ export default function SettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
-    setSaveError(null);
-    setSaveSuccess(false);
     setSaving(true);
     try {
       await updateSettings(form);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success(t.settings.save_success);
     } catch {
-      setSaveError(t.common.error);
+      toast.error(t.common.error);
     } finally {
       setSaving(false);
     }
@@ -219,17 +215,6 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
-
-        {saveError && (
-          <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {saveError}
-          </div>
-        )}
-        {saveSuccess && (
-          <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {t.settings.save_success}
-          </div>
-        )}
 
         <div className="flex justify-between">
           <button

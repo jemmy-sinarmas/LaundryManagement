@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { toast } from '@/store/toastStore';
 import { useLangStore } from '@/store/langStore';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { formatIDR } from '@/lib/utils';
 import type { Promotion, Branch } from '@laundry-palu/shared';
 import { X } from 'lucide-react';
@@ -249,7 +250,7 @@ export default function PromotionsPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
+              <TableSkeleton cols={8} />
             ) : promotions.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">

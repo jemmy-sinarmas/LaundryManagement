@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLangStore } from '@/store/langStore';
 import ExpenseForm from '@/components/expenses/ExpenseForm';
+import TableSkeleton from '@/components/ui/TableSkeleton';
+import { toast } from '@/store/toastStore';
 import { formatIDR } from '@/lib/utils';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -14,13 +16,11 @@ export default function ExpensesPage() {
   const { expenses, categories, inventoryItems, loading, error, createExpense } = useExpenses();
   const { t } = useLangStore();
   const [showForm, setShowForm] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   async function handleSubmit(data: Parameters<typeof createExpense>[0]) {
     await createExpense(data);
     setShowForm(false);
-    setSuccessMsg(t.expenses.save_success);
-    setTimeout(() => setSuccessMsg(null), 3000);
+    toast.success(t.expenses.save_success);
   }
 
   const total = expenses.reduce((s, e) => s + e.jumlah, 0);
@@ -52,11 +52,6 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {successMsg && (
-        <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {successMsg}
-        </div>
-      )}
       {error && (
         <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -92,9 +87,7 @@ export default function ExpensesPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td>
-              </tr>
+              <TableSkeleton cols={5} />
             ) : expenses.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">

@@ -7,6 +7,7 @@ import { toast } from '@/store/toastStore';
 import type { Order, Branch } from '@laundry-palu/shared';
 import { ORDER_STATUSES } from '@laundry-palu/shared';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { FileText } from 'lucide-react';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -132,7 +133,7 @@ export default function AdminOrdersPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
+              <TableSkeleton cols={7} />
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">

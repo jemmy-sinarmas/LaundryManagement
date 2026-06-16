@@ -98,32 +98,40 @@ export async function createOrder(
     promoDiskonAmount
   );
 
-  const invoiceNo = await generateInvoiceNo(db, branch.kode, branchId);
+  // All writes run in a single transaction so a mid-write failure can never leave
+  // an orphaned order (order row without its items / status history) or deduct
+  // membership kg without a committed order. Invoice generation is included so the
+  // sequence count and the insert that consumes it commit together.
+  const order = await db.begin(async (tx) => {
+    const invoiceNo = await generateInvoiceNo(tx, branch.kode, branchId);
 
-  const order = await orderRepo.create(db, {
-    id: randomUUID(),
-    invoiceNo,
-    customerId: data.customerId,
-    membershipId: membership?.id ?? null,
-    diskonPersen: discountPercent,
-    promoId,
-    ...totals,
-    metodePembayaran: data.metodePembayaran,
-    jumlahDibayar: data.jumlahDibayar ?? totals.total,
-    catatan: data.catatan ?? null,
-    branchId,
-    createdBy: userId,
-    items: itemsWithSnapshot,
-  });
+    const created = await orderRepo.create(tx, {
+      id: randomUUID(),
+      invoiceNo,
+      customerId: data.customerId,
+      membershipId: membership?.id ?? null,
+      diskonPersen: discountPercent,
+      promoId,
+      ...totals,
+      metodePembayaran: data.metodePembayaran,
+      jumlahDibayar: data.jumlahDibayar ?? totals.total,
+      catatan: data.catatan ?? null,
+      branchId,
+      createdBy: userId,
+      items: itemsWithSnapshot,
+    });
 
-  if (membership?.tipe === 'paket_kg') {
-    const kiloanQty = itemsWithSnapshot
-      .filter((i) => i.tipe === 'kiloan')
-      .reduce((sum, i) => sum + i.qty, 0);
-    if (kiloanQty > 0) {
-      await membershipRepo.deductKg(db, membership.id, kiloanQty);
+    if (membership?.tipe === 'paket_kg') {
+      const kiloanQty = itemsWithSnapshot
+        .filter((i) => i.tipe === 'kiloan')
+        .reduce((sum, i) => sum + i.qty, 0);
+      if (kiloanQty > 0) {
+        await membershipRepo.deductKg(tx, membership.id, kiloanQty);
+      }
     }
-  }
+
+    return created;
+  });
 
   return order;
 }

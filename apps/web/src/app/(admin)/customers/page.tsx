@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useLangStore } from '@/store/langStore';
+import TableSkeleton from '@/components/ui/TableSkeleton';
+import { toast } from '@/store/toastStore';
 import { COUNTRY_CODES } from '@laundry-palu/shared';
 
 type CreateForm = { nama: string; countryCode: string; noHp: string; alamat: string };
@@ -29,8 +31,10 @@ export default function CustomersPage() {
       });
       setShowDialog(false);
       setForm(EMPTY_FORM);
+      toast.success(t.customers.create_success);
     } catch {
       setFormError(t.customers.error_create);
+      toast.error(t.customers.error_create);
     } finally {
       setSubmitting(false);
     }
@@ -80,11 +84,7 @@ export default function CustomersPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">
-                  {t.common.loading}
-                </td>
-              </tr>
+              <TableSkeleton cols={5} />
             ) : customers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">

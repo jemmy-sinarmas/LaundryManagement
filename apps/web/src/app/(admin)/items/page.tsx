@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useItems } from '@/hooks/useItems';
 import { useLangStore } from '@/store/langStore';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { formatIDR } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
 import { api } from '@/lib/api';
@@ -48,6 +49,7 @@ export default function ItemsPage() {
       toast.success(t.items.save_success);
     } catch {
       setFormError(t.items.error_create);
+      toast.error(t.items.error_create);
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +120,7 @@ export default function ItemsPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
+              <TableSkeleton cols={5} />
             ) : displayed.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">

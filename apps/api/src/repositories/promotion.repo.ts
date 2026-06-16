@@ -1,5 +1,6 @@
 import type { Promotion } from '@laundry-palu/shared';
 import type { SqlDb } from '../lib/db-types.js';
+import { dateOnly } from '../lib/date.js';
 
 type PromotionRow = {
   id: string;
@@ -7,8 +8,8 @@ type PromotionRow = {
   tipe: string;
   nilai: number | bigint;
   min_order: number | bigint;
-  tanggal_mulai: string;
-  tanggal_selesai: string;
+  tanggal_mulai: string | Date;
+  tanggal_selesai: string | Date;
   branch_id: string | null;
   is_active: boolean;
   created_at: string;
@@ -22,8 +23,8 @@ function mapRow(row: PromotionRow): Promotion {
     tipe: row.tipe as Promotion['tipe'],
     nilai: Number(row.nilai),
     minOrder: Number(row.min_order),
-    tanggalMulai: row.tanggal_mulai.slice(0, 10),
-    tanggalSelesai: row.tanggal_selesai.slice(0, 10),
+    tanggalMulai: dateOnly(row.tanggal_mulai),
+    tanggalSelesai: dateOnly(row.tanggal_selesai),
     branchId: row.branch_id ?? null,
     isActive: row.is_active,
     createdAt: row.created_at,

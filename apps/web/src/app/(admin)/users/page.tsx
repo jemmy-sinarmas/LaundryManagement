@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useUsers } from '@/hooks/useUsers';
 import { useLangStore } from '@/store/langStore';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { toast } from '@/store/toastStore';
 import { api } from '@/lib/api';
 import type { Branch, User } from '@laundry-palu/shared';
@@ -94,7 +95,7 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
+              <TableSkeleton cols={5} />
             ) : users.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">{t.users.empty}</td></tr>
             ) : (

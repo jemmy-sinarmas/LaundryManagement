@@ -4,7 +4,9 @@ import { usePOS } from '@/hooks/usePOS';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { useLangStore } from '@/store/langStore';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { api } from '@/lib/api';
+import { toast } from '@/store/toastStore';
 import { formatIDR } from '@/lib/utils';
 import { COUNTRY_CODES } from '@laundry-palu/shared';
 import type { Customer } from '@laundry-palu/shared';
@@ -156,6 +158,7 @@ export default function PosPage() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('kiloan');
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [showPosHint, setShowPosHint] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('pos_onboarded') !== '1';
@@ -167,12 +170,15 @@ export default function PosPage() {
   }
 
   async function handleSubmit() {
+    setShowConfirm(false);
     setOrderError(null);
     try {
       await submitOrder(catatan || undefined);
       setCatatan('');
     } catch (err: unknown) {
-      setOrderError(err instanceof Error ? err.message : t.common.error);
+      const message = err instanceof Error ? err.message : t.common.error;
+      setOrderError(message);
+      toast.error(message);
     }
   }
 
@@ -480,7 +486,7 @@ export default function PosPage() {
           )}
 
           <button
-            onClick={() => void handleSubmit()}
+            onClick={() => setShowConfirm(true)}
             disabled={submitting || !selectedCustomer || cart.length === 0}
             className="w-full rounded bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -488,6 +494,15 @@ export default function PosPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showConfirm}
+        title={t.pos.confirm_title}
+        message={`${cart.length} ${t.pos.confirm_items} · ${t.pos.total} ${formatIDR(total)}. ${t.pos.confirm_question}`}
+        confirmLabel={t.pos.process_payment}
+        onConfirm={() => void handleSubmit()}
+        onCancel={() => setShowConfirm(false)}
+      />
 
       {createdOrder && (
         <PrintableInvoice order={createdOrder} onClose={clearCreatedOrder} />

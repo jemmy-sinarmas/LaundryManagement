@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { PERIODIK_DURATION_OPTIONS, PAKET_KG_OPTIONS } from '@laundry-palu/shared';
+import { toast } from '@/store/toastStore';
 
 type Props = {
   onSubmit: (data: object) => Promise<void>;
@@ -25,8 +26,15 @@ export default function MembershipForm({ onSubmit, onCancel }: Props) {
           ? { tipe, durasibulan, tanggalMulai }
           : { tipe, paketKg };
       await onSubmit(data);
-    } catch {
-      setError('Gagal membuat keanggotaan. Coba lagi.');
+    } catch (err) {
+      // Surface the real failure reason when the API provides one, falling back to
+      // a generic message; also toast it so it is visible even outside the form.
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Gagal membuat keanggotaan. Coba lagi.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

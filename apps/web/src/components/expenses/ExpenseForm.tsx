@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { toast } from '@/store/toastStore';
 import type { ExpenseCategory, ExpensePaymentMethod, InventoryItem } from '@laundry-palu/shared';
 
 type Props = {
@@ -58,7 +59,9 @@ export default function ExpenseForm({ categories, inventoryItems, onSubmit, onCa
       setMetodePembayaran('tunai');
       setTanggal(today);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan pengeluaran');
+      const message = err instanceof Error ? err.message : 'Gagal menyimpan pengeluaran';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

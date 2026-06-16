@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import { loadEnv } from './config/env.js';
 import dbPlugin from './plugins/db.js';
 import corsPlugin from './plugins/cors.js';
 import authPlugin from './plugins/auth.js';
@@ -26,7 +27,30 @@ export interface BuildAppOptions {
 }
 
 export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInstance> {
+  // Fail fast on misconfiguration (missing DB URL, weak JWT secret, etc.) before any
+  // plugin or route is registered.
+  loadEnv();
+
   const fastify = Fastify({ logger: opts.logger ?? false });
+
+  // Centralized error handler — keeps client responses to a consistent { error } shape
+  // and never leaks raw DB/stack details on unexpected failures.
+  fastify.setErrorHandler((error, req, reply) => {
+    const statusCode = (error as { statusCode?: number }).statusCode;
+
+    // Schema/validation failures and explicit client errors thrown by services
+    // (makeError sets statusCode) are safe to surface verbatim.
+    if (error.validation) {
+      return reply.code(400).send({ error: error.message });
+    }
+    if (statusCode && statusCode >= 400 && statusCode < 500) {
+      return reply.code(statusCode).send({ error: error.message });
+    }
+
+    // Anything else is unexpected: log full detail server-side, return a generic message.
+    req.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error' });
+  });
 
   await fastify.register(dbPlugin);
   await fastify.register(corsPlugin);
@@ -62,7 +86,18 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await fastify.register(messageTemplateRoutes, { prefix: '/api/v1/message-templates' });
   await fastify.register(notificationLogRoutes, { prefix: '/api/v1/notification-log' });
 
+  // Liveness: process is up and serving.
   fastify.get('/health', async () => ({ status: 'ok' }));
+
+  // Readiness: dependencies (DB) are reachable. Used by orchestrators/healthchecks.
+  fastify.get('/ready', async (_req, reply) => {
+    try {
+      await fastify.db`SELECT 1`;
+      return { status: 'ready' };
+    } catch {
+      return reply.code(503).send({ status: 'unavailable' });
+    }
+  });
 
   return fastify;
 }

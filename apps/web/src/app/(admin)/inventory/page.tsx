@@ -6,6 +6,7 @@ import { toast } from '@/store/toastStore';
 import StockAlert from '@/components/inventory/StockAlert';
 import TransactionHistory from '@/components/inventory/TransactionHistory';
 import FieldHint from '@/components/ui/FieldHint';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { formatIDR } from '@/lib/utils';
 import { api } from '@/lib/api';
 import type { Branch, InventoryItem, InventoryTransaction } from '@laundry-palu/shared';
@@ -554,7 +555,7 @@ export default function InventoryPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
+              <TableSkeleton cols={7} />
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">

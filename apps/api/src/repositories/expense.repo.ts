@@ -1,9 +1,10 @@
 import type { Expense, ExpenseCategory } from '@laundry-palu/shared';
 import type { SqlDb } from '../lib/db-types.js';
+import { dateOnly } from '../lib/date.js';
 
 type ExpenseRow = {
   id: string;
-  tanggal: string;
+  tanggal: string | Date;
   jumlah: number | bigint;
   category_id: string;
   deskripsi: string | null;
@@ -24,7 +25,7 @@ type ExpenseJoinRow = ExpenseRow & {
 function mapRow(row: ExpenseRow): Expense {
   return {
     id: row.id,
-    tanggal: row.tanggal.slice(0, 10),
+    tanggal: dateOnly(row.tanggal),
     jumlah: Number(row.jumlah),
     categoryId: row.category_id,
     deskripsi: row.deskripsi,

@@ -4,11 +4,27 @@ on:
   push:
     branches: ['**']
   pull_request:
-    branches: [main]
+    branches: [master, main]
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+
+    # Postgres service so the integration suite has a real DB to run against.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -37,8 +53,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm --filter @laundry-palu/api run typecheck
+      - name: Typecheck (api + web)
+        run: pnpm run typecheck
 
-      - name: Test
+      - name: Lint (api + web)
+        run: pnpm run lint
+
+      - name: Unit tests
         run: pnpm --filter @laundry-palu/api run test
+
+      # The integration global-setup reads apps/api/.env.test (gitignored), so create it
+      # here pointing at the Postgres service container. global-setup creates the
+      # laundry_palu_test database and applies migrations on first run.
+      - name: Create .env.test for integration suite
+        run: |
+          cat > apps/api/.env.test <<'EOF'
+          DATABASE_URL=postgres://postgres:postgres@localhost:5432/laundry_palu_test
+          JWT_SECRET=ci-integration-test-secret-0123456789-abcdef
+          JWT_EXPIRES_IN=1h
+          CORS_ORIGIN=http://localhost:3000
+          NODE_ENV=test
+          PORT=4001
+          EOF
+
+      - name: Integration tests
+        run: pnpm --filter @laundry-palu/api run test:integration

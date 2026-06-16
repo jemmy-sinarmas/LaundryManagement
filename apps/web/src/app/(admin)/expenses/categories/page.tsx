@@ -1,8 +1,10 @@
 'use client';
 import { useState } from 'react';
 import Breadcrumb from '@/components/ui/Breadcrumb';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import { EXPENSE_LEVELS } from '@laundry-palu/shared';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -34,8 +36,10 @@ export default function ExpenseCategoriesPage() {
       await createCategory(form);
       setShowDialog(false);
       setForm(EMPTY_FORM);
+      toast.success(t.expenses.category_save_success);
     } catch {
       setFormError(t.expenses.error_create_category);
+      toast.error(t.expenses.error_create_category);
     } finally {
       setSubmitting(false);
     }
@@ -70,9 +74,7 @@ export default function ExpenseCategoriesPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr>
-                <td colSpan={2} className="px-6 py-8 text-center text-sm text-gray-400">{t.common.loading}</td>
-              </tr>
+              <TableSkeleton cols={2} />
             ) : categories.length === 0 ? (
               <tr>
                 <td colSpan={2} className="px-6 py-8 text-center text-sm text-gray-400">{t.expenses.category_empty}</td>

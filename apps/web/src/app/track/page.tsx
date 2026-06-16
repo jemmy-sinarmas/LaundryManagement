@@ -3,15 +3,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
+import { useLangStore } from '@/store/langStore';
 import type { Order } from '@laundry-palu/shared';
 import { Search } from 'lucide-react';
 
-const STATUS_LABELS: Record<string, string> = {
-  diterima: 'Diterima', dicuci: 'Sedang Dicuci', dikeringkan: 'Sedang Dikeringkan',
-  dibungkus: 'Sedang Dibungkus', siap_diambil: 'Siap Diambil', selesai: 'Selesai',
-};
-
 export default function TrackLandingPage() {
+  const { t } = useLangStore();
+  const statusLabel = (status: string) =>
+    (t.status as Record<string, string>)[status] ?? status;
   const [mode, setMode] = useState<'invoice' | 'phone'>('invoice');
   const [query, setQuery] = useState('');
   const [invoiceResult, setInvoiceResult] = useState<Order | null>(null);
@@ -110,7 +109,7 @@ export default function TrackLandingPage() {
                 invoiceResult.status === 'selesai' ? 'bg-blue-100 text-blue-800' :
                 'bg-yellow-100 text-yellow-800'
               }`}>
-                {STATUS_LABELS[invoiceResult.status] ?? invoiceResult.status}
+                {statusLabel(invoiceResult.status)}
               </span>
             </div>
             <p className="mb-3 text-lg font-bold text-gray-900">{formatIDR(invoiceResult.total)}</p>
@@ -149,7 +148,7 @@ export default function TrackLandingPage() {
                         order.status === 'selesai' ? 'bg-blue-100 text-blue-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {STATUS_LABELS[order.status] ?? order.status}
+                        {statusLabel(order.status)}
                       </span>
                     </div>
                   </div>

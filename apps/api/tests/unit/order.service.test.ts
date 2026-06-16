@@ -29,7 +29,11 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const mockDb = {} as Parameters<typeof createOrder>[0];
+// createOrder now wraps its writes in db.begin(); the mock runs the callback with
+// itself as the transaction handle so the existing call assertions still hold.
+const mockDb = {
+  begin: (fn: (tx: unknown) => unknown) => fn(mockDb),
+} as unknown as Parameters<typeof createOrder>[0];
 const MOCK_BRANCH_ID = 'branch-1';
 
 const mockBranch: Branch = {
