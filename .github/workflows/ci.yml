@@ -59,8 +59,11 @@ jobs:
       - name: Lint (api + web)
         run: pnpm run lint
 
-      - name: Unit tests
+      - name: Unit tests (api)
         run: pnpm --filter @laundry-palu/api run test
+
+      - name: Unit tests (web)
+        run: pnpm --filter @laundry-palu/web run test
 
       # The integration global-setup reads apps/api/.env.test (gitignored), so create it
       # here pointing at the Postgres service container. global-setup creates the

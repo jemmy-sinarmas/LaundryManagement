@@ -1,22 +1,17 @@
 import { useEffect } from 'react';
 import { api } from '@/lib/api';
 import { usePosStore } from '@/store/posStore';
+import { syncPendingOrders } from '@/lib/offlineSync';
 import type { Order } from '@laundry-palu/shared';
 
 export function useOfflineSync() {
   const { pendingOrders, removePendingOrder } = usePosStore();
 
-  const syncPending = async () => {
-    for (const pending of [...pendingOrders]) {
-      const { timestamp, ...payload } = pending;
-      try {
-        await api.post<Order>('/api/v1/orders', payload);
-        removePendingOrder(timestamp);
-      } catch {
-        break; // still offline — stop and retry on next online event
-      }
-    }
-  };
+  const syncPending = () =>
+    syncPendingOrders([...pendingOrders], {
+      post: (payload) => api.post<Order>('/api/v1/orders', payload),
+      remove: removePendingOrder,
+    });
 
   useEffect(() => {
     // Attempt sync immediately if there are pending orders and we're online

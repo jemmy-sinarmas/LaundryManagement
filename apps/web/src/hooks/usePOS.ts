@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { calcSubtotal, calcOrderTotals } from '@/lib/calculations';
 import { usePosStore } from '@/store/posStore';
 import type {
   Customer,
@@ -71,16 +72,12 @@ export function usePOS() {
     }
   }, []);
 
-  const subtotal = cart.reduce((s, c) => s + Math.floor(c.item.harga * c.qty), 0);
-  const diskonAmount = Math.floor((subtotal * discountPercent) / 100);
-
-  const promoDiskonAmount = selectedPromo
-    ? selectedPromo.tipe === 'persen'
-      ? Math.floor((subtotal * selectedPromo.nilai) / 100)
-      : Math.min(selectedPromo.nilai, subtotal)
-    : 0;
-
-  const total = subtotal - diskonAmount - promoDiskonAmount;
+  const subtotal = calcSubtotal(cart);
+  const { diskonAmount, promoDiskonAmount, total } = calcOrderTotals({
+    subtotal,
+    discountPercent,
+    promo: selectedPromo,
+  });
 
   async function submitOrder(catatan?: string) {
     if (!selectedCustomer) throw new Error('Pilih pelanggan terlebih dahulu');
