@@ -10,6 +10,15 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'node',
-    include: ['tests/unit/**/*.test.ts'],
+    envFile: '.env.test',
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+    include: ['tests/integration/**/*.test.ts'],
+    globalSetup: './tests/integration/global-setup.ts',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
   },
 });

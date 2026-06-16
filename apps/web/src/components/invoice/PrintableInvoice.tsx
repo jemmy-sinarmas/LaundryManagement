@@ -16,12 +16,8 @@ export default function PrintableInvoice({ order, onClose }: Props) {
   const { settings } = useSettings();
   const qrUrl =
     typeof window !== 'undefined'
-      ? order.pickupToken
-        ? `${window.location.origin}/pickup/${order.pickupToken}`
-        : `${window.location.origin}/track/${order.invoiceNo}`
-      : order.pickupToken
-        ? `/pickup/${order.pickupToken}`
-        : `/track/${order.invoiceNo}`;
+      ? `${window.location.origin}/track/t/${order.pickupToken ?? order.invoiceNo}`
+      : `/track/t/${order.pickupToken ?? order.invoiceNo}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-white print:inset-auto">
@@ -107,9 +103,7 @@ export default function PrintableInvoice({ order, onClose }: Props) {
           {/* QR Code */}
           <div className="flex flex-col items-center gap-2 py-4">
             <QRCode value={qrUrl} size={120} />
-            <p className="text-xs text-gray-400">
-              {order.pickupToken ? 'Scan untuk validasi pengambilan' : 'Scan untuk lacak pesanan'}
-            </p>
+            <p className="text-xs text-gray-400">Scan untuk lacak status pesanan</p>
           </div>
 
           {order.catatan && (
