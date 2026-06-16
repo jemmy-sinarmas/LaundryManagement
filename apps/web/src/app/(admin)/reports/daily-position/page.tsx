@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useDailyPosition } from '@/hooks/useReports';
+import { useLangStore } from '@/store/langStore';
 import { Printer } from 'lucide-react';
 
 function Row({
@@ -43,6 +45,7 @@ export default function DailyPositionReportPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const { data, loading, error } = useDailyPosition(date);
+  const { t } = useLangStore();
 
   const formattedDate = new Date(date).toLocaleDateString('id-ID', {
     day: '2-digit',
@@ -52,8 +55,9 @@ export default function DailyPositionReportPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.daily_position }]} />
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Posisi Harian</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.reports.daily_position}</h1>
         <div className="flex items-center gap-3">
           <input
             type="date"
@@ -71,7 +75,7 @@ export default function DailyPositionReportPage() {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}

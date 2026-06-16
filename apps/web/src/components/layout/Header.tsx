@@ -1,14 +1,14 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useLangStore } from '@/store/langStore';
 import { useAuthStore } from '@/store/authStore';
+import { useLangStore } from '@/store/langStore';
 import { api } from '@/lib/api';
 import { LogOut, User } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
-  const { lang, setLang } = useLangStore();
   const { user, clear } = useAuthStore();
+  const { lang, t, setLang } = useLangStore();
 
   async function handleLogout() {
     try { await api.delete('/api/v1/auth/logout'); } catch { /* cookie still cleared below */ }
@@ -29,11 +29,11 @@ export default function Header() {
         )}
       </div>
 
-      {/* Right: language toggle + logout */}
-      <div className="flex items-center gap-3">
+      {/* Right: lang toggle + logout */}
+      <div className="flex items-center gap-2">
         <button
           onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-100"
         >
           {lang === 'id' ? 'EN' : 'ID'}
         </button>
@@ -42,7 +42,7 @@ export default function Header() {
           className="flex items-center gap-1.5 rounded border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
         >
           <LogOut size={14} />
-          {lang === 'id' ? 'Keluar' : 'Logout'}
+          {t.nav.logout}
         </button>
       </div>
     </header>

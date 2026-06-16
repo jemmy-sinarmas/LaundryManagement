@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useMonthlyReport } from '@/hooks/useReports';
+import { useLangStore } from '@/store/langStore';
 import { formatIDR } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -17,6 +19,7 @@ export default function MonthlyReportPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const { data, loading, error } = useMonthlyReport(year, month);
+  const { t } = useLangStore();
 
   const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
@@ -32,8 +35,9 @@ export default function MonthlyReportPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.monthly }]} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Bulanan</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.reports.monthly}</h1>
         <div className="flex items-center gap-2">
           <select
             value={month}
@@ -54,7 +58,7 @@ export default function MonthlyReportPage() {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}

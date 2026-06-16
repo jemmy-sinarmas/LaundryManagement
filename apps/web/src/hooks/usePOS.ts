@@ -4,6 +4,7 @@ import { usePosStore } from '@/store/posStore';
 import type {
   Customer,
   Item,
+  Membership,
   MembershipValidationResult,
   Order,
   OrderPaymentMethod,
@@ -17,6 +18,8 @@ export function usePOS() {
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [membership, setMembership] = useState<Membership | null>(null);
+  const [membershipWarning, setMembershipWarning] = useState<string | null>(null);
   const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
   const [metodePembayaran, setMetodePembayaran] = useState<OrderPaymentMethod>('tunai');
   // null => paid in full (omit jumlahDibayar so the API defaults it to total)
@@ -38,10 +41,10 @@ export function usePOS() {
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await api.get<Customer[]>(
-          `/api/v1/customers?q=${encodeURIComponent(customerQuery.trim())}`
+        const res = await api.get<{ data: Customer[] }>(
+          `/api/v1/customers?q=${encodeURIComponent(customerQuery.trim())}&limit=10`
         );
-        setCustomerResults(results);
+        setCustomerResults(res.data);
       } catch {
         setCustomerResults([]);
       }
@@ -54,11 +57,15 @@ export function usePOS() {
     setCustomerQuery('');
     setCustomerResults([]);
     setSelectedPromo(null);
+    setMembership(null);
+    setMembershipWarning(null);
     try {
       const v = await api.get<MembershipValidationResult>(
         `/api/v1/customers/${customer.id}/membership/validate`
       );
       setDiscountPercent(v.discountPercent);
+      setMembership(v.membership);
+      setMembershipWarning(v.warning);
     } catch {
       setDiscountPercent(0);
     }
@@ -94,6 +101,8 @@ export function usePOS() {
       clearCart();
       setSelectedCustomer(null);
       setDiscountPercent(0);
+      setMembership(null);
+      setMembershipWarning(null);
       setSelectedPromo(null);
       setMetodePembayaran('tunai');
       setJumlahDibayar(null);
@@ -120,6 +129,8 @@ export function usePOS() {
     selectedCustomer,
     selectCustomer,
     discountPercent,
+    membership,
+    membershipWarning,
     selectedPromo,
     setSelectedPromo,
     metodePembayaran,

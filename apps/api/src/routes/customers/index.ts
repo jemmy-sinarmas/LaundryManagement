@@ -7,9 +7,13 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
   const adminOnly = { preHandler: [fastify.authorizeRoles('admin')] };
 
   fastify.get('/', authOnly, async (req, reply) => {
-    const { q } = req.query as { q?: string };
-    const customers = await customerService.listCustomers(fastify.db, q);
-    reply.send(customers);
+    const { q, page, limit } = req.query as { q?: string; page?: string; limit?: string };
+    const opts: { search?: string; page?: number; limit?: number } = {};
+    if (q     !== undefined) opts.search = q;
+    if (page  !== undefined) opts.page   = Number(page);
+    if (limit !== undefined) opts.limit  = Number(limit);
+    const result = await customerService.listCustomers(fastify.db, opts);
+    reply.send(result);
   });
 
   fastify.post('/', authOnly, async (req, reply) => {

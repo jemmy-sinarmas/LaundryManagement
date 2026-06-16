@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
 import type { Order } from '@laundry-palu/shared';
 import { ORDER_STATUSES } from '@laundry-palu/shared';
-import { CheckCircle, Circle, ArrowLeft, Package } from 'lucide-react';
+import { CheckCircle, Circle, ArrowLeft, Package, RefreshCw } from 'lucide-react';
 
 const STATUS_LABELS_ID: Record<string, string> = {
   diterima: 'Diterima', dicuci: 'Sedang Dicuci', dikeringkan: 'Sedang Dikeringkan',
@@ -21,18 +21,44 @@ export default function TrackDetailPage() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [notFound, setNotFound] = useState(false);
-  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [lang, setLang] = useState<'id' | 'en'>(() => {
+    if (typeof window === 'undefined') return 'id';
+    return (localStorage.getItem('track-lang') as 'id' | 'en') ?? 'id';
+  });
 
   const STATUS_LABELS = lang === 'id' ? STATUS_LABELS_ID : STATUS_LABELS_EN;
 
-  useEffect(() => {
+  function toggleLang() {
+    const next = lang === 'id' ? 'en' : 'id';
+    setLang(next);
+    localStorage.setItem('track-lang', next);
+  }
+
+  const fetchOrder = useCallback(async () => {
     if (!invoiceId) return;
-    api.get<Order>(`/api/v1/track/${encodeURIComponent(invoiceId)}`)
-      .then(setOrder)
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    try {
+      const data = await api.get<Order>(`/api/v1/track/${encodeURIComponent(invoiceId)}`);
+      setOrder(data);
+      setNotFound(false);
+    } catch {
+      setNotFound(true);
+    }
   }, [invoiceId]);
+
+  useEffect(() => {
+    void fetchOrder().finally(() => setLoading(false));
+  }, [fetchOrder]);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await fetchOrder();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -65,17 +91,28 @@ export default function TrackDetailPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-lg space-y-4">
-        {/* Back + lang toggle */}
+        {/* Back + refresh + lang toggle */}
         <div className="flex items-center justify-between">
           <Link href="/track" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
             <ArrowLeft size={14} /> Kembali
           </Link>
-          <button
-            onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
-            className="rounded border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-100"
-          >
-            {lang === 'id' ? 'EN' : 'ID'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+              title={lang === 'id' ? 'Perbarui status' : 'Refresh status'}
+            >
+              <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+              {lang === 'id' ? 'Perbarui' : 'Refresh'}
+            </button>
+            <button
+              onClick={toggleLang}
+              className="rounded border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-100"
+            >
+              {lang === 'id' ? 'EN' : 'ID'}
+            </button>
+          </div>
         </div>
 
         {/* Ready banner */}

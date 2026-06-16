@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { toast } from '@/store/toastStore';
+import { useLangStore } from '@/store/langStore';
 import { formatIDR } from '@/lib/utils';
 import type { Promotion, Branch } from '@laundry-palu/shared';
 import { X } from 'lucide-react';
@@ -37,6 +38,7 @@ function CreatePromotionModal({
   onSubmit: (data: CreateForm) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useLangStore();
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,7 @@ function CreatePromotionModal({
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal menambah promosi');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ function CreatePromotionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Tambah Promosi</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.promotions.new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
         </div>
         {error && (
@@ -67,7 +69,7 @@ function CreatePromotionModal({
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Promosi</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.promotions.name}</label>
             <input
               type="text"
               value={form.nama}
@@ -80,19 +82,19 @@ function CreatePromotionModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Tipe Diskon</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t.promotions.type}</label>
               <select
                 value={form.tipe}
                 onChange={(e) => setForm({ ...form, tipe: e.target.value as 'persen' | 'nominal' })}
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="persen">Persentase (%)</option>
-                <option value="nominal">Nominal (Rp)</option>
+                <option value="persen">{t.promotions.type_persen}</option>
+                <option value="nominal">{t.promotions.type_nominal}</option>
               </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Nilai {form.tipe === 'persen' ? '(%)' : '(Rp)'}
+                {t.promotions.value} {form.tipe === 'persen' ? '(%)' : '(Rp)'}
               </label>
               <input
                 type="number"
@@ -106,7 +108,7 @@ function CreatePromotionModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Minimum Order (Rp)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.promotions.min_order}</label>
             <input
               type="number"
               value={form.minOrder}
@@ -114,12 +116,12 @@ function CreatePromotionModal({
               min={0}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-gray-400">Isi 0 jika tidak ada minimum order.</p>
+            <p className="mt-1 text-xs text-gray-400">{t.promotions.min_order_hint}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Tanggal Mulai</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t.promotions.period_start}</label>
               <input
                 type="date"
                 value={form.tanggalMulai}
@@ -129,7 +131,7 @@ function CreatePromotionModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Tanggal Selesai</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t.promotions.period_end}</label>
               <input
                 type="date"
                 value={form.tanggalSelesai}
@@ -142,14 +144,14 @@ function CreatePromotionModal({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Cabang <span className="text-gray-400">(opsional — kosong = semua cabang)</span>
+              {t.promotions.branch_col} <span className="text-gray-400">({t.promotions.branch_hint})</span>
             </label>
             <select
               value={form.branchId}
               onChange={(e) => setForm({ ...form, branchId: e.target.value })}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             >
-              <option value="">Semua Cabang</option>
+              <option value="">{t.common.all_branches}</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.nama}</option>
               ))}
@@ -158,10 +160,10 @@ function CreatePromotionModal({
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-              Batal
+              {t.common.cancel}
             </button>
             <button type="submit" disabled={loading} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? t.common.saving : t.common.save}
             </button>
           </div>
         </form>
@@ -171,6 +173,7 @@ function CreatePromotionModal({
 }
 
 export default function PromotionsPage() {
+  const { t } = useLangStore();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,11 +186,11 @@ export default function PromotionsPage() {
       const data = await api.get<Promotion[]>('/api/v1/promotions');
       setPromotions(data);
     } catch {
-      toast.error('Gagal memuat promosi');
+      toast.error(t.common.error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchPromotions();
@@ -215,7 +218,7 @@ export default function PromotionsPage() {
       setPromotions((prev) => prev.map((p) => p.id === promo.id ? { ...p, isActive: !p.isActive } : p));
       toast.success(promo.isActive ? 'Promosi dinonaktifkan' : 'Promosi diaktifkan');
     } catch {
-      toast.error('Gagal mengubah status promosi');
+      toast.error(t.common.error);
     } finally {
       setToggling(null);
     }
@@ -226,12 +229,12 @@ export default function PromotionsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manajemen Promosi</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.promotions.title}</h1>
         <button
           onClick={() => setShowCreate(true)}
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          + Tambah Promosi
+          {t.promotions.new}
         </button>
       </div>
 
@@ -239,16 +242,23 @@ export default function PromotionsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Nama', 'Tipe', 'Nilai', 'Min. Order', 'Cabang', 'Masa Berlaku', 'Status', 'Aksi'].map((h) => (
+              {[t.common.name, t.promotions.type, t.promotions.value, t.promotions.min_order_col, t.promotions.branch_col, t.promotions.period_col, t.common.status, t.common.actions].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">Memuat...</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
             ) : promotions.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">Belum ada promosi.</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">
+                  {t.promotions.empty}{' '}
+                  <button onClick={() => setShowCreate(true)} className="text-blue-600 hover:underline">
+                    {t.promotions.cta_add}
+                  </button>
+                </td>
+              </tr>
             ) : (
               promotions.map((promo) => {
                 const branch = branches.find((b) => b.id === promo.branchId);
@@ -257,14 +267,16 @@ export default function PromotionsPage() {
                 return (
                   <tr key={promo.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{promo.nama}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{promo.tipe === 'persen' ? 'Persentase' : 'Nominal'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {promo.tipe === 'persen' ? t.promotions.type_persen : t.promotions.type_nominal}
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
                       {promo.tipe === 'persen' ? `${promo.nilai}%` : formatIDR(promo.nilai)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {promo.minOrder > 0 ? formatIDR(promo.minOrder) : '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{branch?.nama ?? 'Semua Cabang'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{branch?.nama ?? t.common.all_branches}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">
                       <span className={expired ? 'text-red-500' : notStarted ? 'text-yellow-600' : 'text-green-600'}>
                         {promo.tanggalMulai} s/d {promo.tanggalSelesai}
@@ -274,7 +286,11 @@ export default function PromotionsPage() {
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                         promo.isActive && !expired ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {promo.isActive && !expired ? 'Aktif' : expired ? 'Kadaluarsa' : 'Nonaktif'}
+                        {promo.isActive && !expired
+                          ? t.promotions.status_active
+                          : expired
+                          ? t.promotions.status_expired
+                          : t.promotions.status_inactive}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -287,7 +303,7 @@ export default function PromotionsPage() {
                             : 'border-green-300 text-green-600 hover:bg-green-50'
                         }`}
                       >
-                        {toggling === promo.id ? '...' : promo.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                        {toggling === promo.id ? '...' : promo.isActive ? t.promotions.deactivate : t.promotions.activate}
                       </button>
                     </td>
                   </tr>

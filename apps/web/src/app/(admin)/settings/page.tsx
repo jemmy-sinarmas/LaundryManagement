@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useSettings } from '@/hooks/useSettings';
+import { useLangStore } from '@/store/langStore';
 import type { AppSettings, Order } from '@laundry-palu/shared';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
 
@@ -37,6 +38,7 @@ const SAMPLE_ORDER: Order = {
 
 export default function SettingsPage() {
   const { settings, loading, error, updateSettings } = useSettings();
+  const { t } = useLangStore();
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -69,29 +71,29 @@ export default function SettingsPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch {
-      setSaveError('Gagal menyimpan pengaturan. Coba lagi.');
+      setSaveError(t.common.error);
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Memuat...</p>;
+  if (loading) return <p className="text-sm text-gray-400">{t.common.loading}</p>;
   if (error) return <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>;
   if (!form) return null;
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pengaturan</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.settings.title}</h1>
         <p className="mt-1 text-sm text-gray-500">Konfigurasi bisnis dan template invoice.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <div className="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Informasi Bisnis</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t.settings.subtitle_business}</h2>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Bisnis</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.business_name}</label>
             <input
               type="text"
               value={form.businessName}
@@ -101,7 +103,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Alamat</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.address}</label>
             <input
               type="text"
               value={form.businessAddress}
@@ -112,7 +114,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">No. Telepon</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.phone}</label>
             <input
               type="tel"
               value={form.businessPhone}
@@ -124,12 +126,12 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Pajak &amp; Biaya Layanan</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t.settings.subtitle_tax}</h2>
           <p className="text-xs text-gray-400">Isi 0 untuk menonaktifkan. Nilai digunakan pada setiap pesanan baru.</p>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">PPN (%)</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.ppn}</label>
               <input
                 type="number"
                 min={0}
@@ -142,7 +144,7 @@ export default function SettingsPage() {
               <p className="mt-1 text-xs text-gray-400">Contoh: 11 untuk PPN 11%</p>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Biaya Layanan / Gratuity (%)</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.service_fee}</label>
               <input
                 type="number"
                 min={0}
@@ -158,11 +160,11 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Kas</h2>
-          <p className="text-xs text-gray-400">Saldo awal kas dipakai sebagai dasar perhitungan KAS pada Laporan Posisi Harian.</p>
+          <h2 className="text-base font-semibold text-gray-900">{t.settings.subtitle_cash}</h2>
+          <p className="text-xs text-gray-400">{t.settings.opening_balance_hint}</p>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Saldo Awal Kas (IDR)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.opening_balance} (IDR)</label>
             <input
               type="number"
               min={0}
@@ -175,10 +177,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">Template Invoice</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t.settings.subtitle_invoice}</h2>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Footer Invoice</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.settings.invoice_footer}</label>
             <textarea
               value={form.invoiceFooter}
               onChange={(e) => setForm({ ...form, invoiceFooter: e.target.value })}
@@ -188,7 +190,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Logo</label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">{t.settings.logo_upload}</label>
             {form.logoBase64 && (
               <img
                 src={form.logoBase64}
@@ -225,7 +227,7 @@ export default function SettingsPage() {
         )}
         {saveSuccess && (
           <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            Pengaturan berhasil disimpan.
+            {t.settings.save_success}
           </div>
         )}
 
@@ -242,7 +244,7 @@ export default function SettingsPage() {
             disabled={saving}
             className="rounded bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
+            {saving ? t.common.saving : t.common.save}
           </button>
         </div>
       </form>

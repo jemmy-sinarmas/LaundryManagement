@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useMessageTemplates } from '@/hooks/useMessageTemplates';
 import { useSettings } from '@/hooks/useSettings';
+import { useLangStore } from '@/store/langStore';
 import { toast } from '@/store/toastStore';
+import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
 import type { MessageTemplate, MessageTemplateType } from '@laundry-palu/shared';
 
@@ -17,7 +19,6 @@ const TEMPLATE_LABELS: Record<MessageTemplateType, { title: string; desc: string
   },
 };
 
-// Sample data used only for the live preview (mirrors the backend renderer layout).
 const SAMPLE = {
   invoiceNo: 'INV.063.260614.005',
   date: 'Minggu, 14 Jun 2026',
@@ -83,6 +84,7 @@ function TemplateCard({
   businessPhone: string;
   onSave: (type: MessageTemplateType, draft: Draft) => Promise<void>;
 }) {
+  const { t } = useLangStore();
   const [draft, setDraft] = useState<Draft>({
     header: template.header,
     footer: template.footer,
@@ -97,7 +99,7 @@ function TemplateCard({
       await onSave(template.type, draft);
       toast.success('Template berhasil disimpan');
     } catch {
-      toast.error('Gagal menyimpan template. Coba lagi.');
+      toast.error(t.common.error);
     } finally {
       setSaving(false);
     }
@@ -116,7 +118,7 @@ function TemplateCard({
             checked={draft.isActive}
             onChange={(e) => setDraft({ ...draft, isActive: e.target.checked })}
           />
-          Aktif
+          {t.common.active}
         </label>
       </div>
 
@@ -153,7 +155,7 @@ function TemplateCard({
             disabled={saving}
             className="rounded bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'Menyimpan...' : 'Simpan Template'}
+            {saving ? t.common.saving : 'Simpan Template'}
           </button>
         </div>
 
@@ -171,6 +173,7 @@ function TemplateCard({
 export default function MessageTemplatesPage() {
   const { templates, loading, error, updateTemplate } = useMessageTemplates();
   const { settings, updateSettings } = useSettings();
+  const { t } = useLangStore();
 
   const [waForm, setWaForm] = useState({
     whatsappEnabled: false,
@@ -181,6 +184,7 @@ export default function MessageTemplatesPage() {
   });
   const [waReady, setWaReady] = useState(false);
   const [savingWa, setSavingWa] = useState(false);
+  const [testingWa, setTestingWa] = useState(false);
 
   useEffect(() => {
     if (settings && !waReady) {
@@ -205,13 +209,29 @@ export default function MessageTemplatesPage() {
       await updateSettings(waForm);
       toast.success('Koneksi WhatsApp berhasil disimpan');
     } catch {
-      toast.error('Gagal menyimpan koneksi WhatsApp.');
+      toast.error(t.common.error);
     } finally {
       setSavingWa(false);
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Memuat...</p>;
+  async function handleTestWa() {
+    setTestingWa(true);
+    try {
+      const result = await api.post<{ status: string; error: string | null }>('/api/v1/settings/test-whatsapp', {});
+      if (result.status === 'sent') {
+        toast.success(t.notifications.test_ok);
+      } else {
+        toast.info(t.notifications.test_skipped);
+      }
+    } catch {
+      toast.error(t.notifications.test_error);
+    } finally {
+      setTestingWa(false);
+    }
+  }
+
+  if (loading) return <p className="text-sm text-gray-400">{t.common.loading}</p>;
   if (error)
     return (
       <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -222,17 +242,17 @@ export default function MessageTemplatesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Template Pesan WhatsApp</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.message_templates.title}</h1>
         <p className="mt-1 text-sm text-gray-500">
           Atur pesan yang dikirim ke pelanggan saat pembayaran dan saat pesanan siap diambil.
         </p>
       </div>
 
       <div className="space-y-6">
-        {templates.map((t) => (
+        {templates.map((tpl) => (
           <TemplateCard
-            key={t.id}
-            template={t}
+            key={tpl.id}
+            template={tpl}
             businessName={settings?.businessName ?? ''}
             businessPhone={settings?.businessPhone ?? ''}
             onSave={handleSaveTemplate}
@@ -296,14 +316,24 @@ export default function MessageTemplatesPage() {
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               />
             </div>
+            <div className="flex gap-3">
             <button
               type="button"
               onClick={handleSaveWa}
               disabled={savingWa}
               className="rounded bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {savingWa ? 'Menyimpan...' : 'Simpan Koneksi'}
+              {savingWa ? t.common.saving : 'Simpan Koneksi'}
             </button>
+            <button
+              type="button"
+              onClick={() => void handleTestWa()}
+              disabled={testingWa}
+              className="rounded border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+            >
+              {testingWa ? t.notifications.test_sending : t.notifications.test_btn}
+            </button>
+            </div>
           </div>
         </div>
       </div>

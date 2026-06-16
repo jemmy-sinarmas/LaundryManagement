@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useDailyReport } from '@/hooks/useReports';
+import { useLangStore } from '@/store/langStore';
 import { formatIDR } from '@/lib/utils';
 import { Printer } from 'lucide-react';
 
@@ -8,11 +10,13 @@ export default function DailyReportPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const { data, loading, error } = useDailyReport(date);
+  const { t } = useLangStore();
 
   return (
     <div>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.daily }]} />
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Harian</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.reports.daily}</h1>
         <div className="flex items-center gap-3">
           <input
             type="date"
@@ -32,11 +36,11 @@ export default function DailyReportPage() {
 
       {/* Print header (hidden on screen) */}
       <div className="hidden print:block mb-4">
-        <h1 className="text-xl font-bold">Laundry Palu — Laporan Harian</h1>
+        <h1 className="text-xl font-bold">{t.app.name} — {t.reports.daily}</h1>
         <p className="text-sm text-gray-500">Tanggal: {date}</p>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}

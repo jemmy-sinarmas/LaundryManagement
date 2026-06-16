@@ -174,8 +174,8 @@ export async function getOrder(db: SqlDb, id: string): Promise<Order> {
 
 export async function listOrders(
   db: SqlDb,
-  opts?: { customerId?: string; status?: string; branchId?: string | null }
-): Promise<Order[]> {
+  opts?: { customerId?: string; status?: string; branchId?: string | null; page?: number; limit?: number }
+): Promise<{ data: Order[]; hasMore: boolean }> {
   return orderRepo.findAll(db, opts);
 }
 

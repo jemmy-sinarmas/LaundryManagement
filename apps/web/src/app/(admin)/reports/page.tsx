@@ -1,52 +1,24 @@
+'use client';
 import Link from 'next/link';
-
-const REPORTS = [
-  {
-    href: '/reports/daily',
-    title: 'Laporan Harian',
-    description: 'Ringkasan penjualan dan pengeluaran per hari',
-  },
-  {
-    href: '/reports/daily-position',
-    title: 'Laporan Posisi Harian',
-    description: 'Posisi kas, piutang, dan rekap transaksi harian',
-  },
-  {
-    href: '/reports/monthly',
-    title: 'Laporan Bulanan',
-    description: 'Rekap pendapatan dan pengeluaran per bulan',
-  },
-  {
-    href: '/reports/income-statement',
-    title: 'Laporan Laba Rugi',
-    description: 'Laporan laba rugi dalam rentang waktu tertentu',
-  },
-  {
-    href: '/reports/sales',
-    title: 'Laporan Penjualan',
-    description: 'Analisis pendapatan per jenis layanan dan item terlaris',
-  },
-  {
-    href: '/reports/transactions',
-    title: 'Laporan Transaksi',
-    description: 'Semua transaksi pesanan dalam periode tertentu',
-  },
-  {
-    href: '/reports/invoices',
-    title: 'Laporan Faktur',
-    description: 'Daftar faktur dengan pencarian dan preview nota',
-  },
-  {
-    href: '/reports/shifts',
-    title: 'Laporan Shift',
-    description: 'Rekap shift kasir beserta modal dan jumlah pesanan',
-  },
-];
+import { useLangStore } from '@/store/langStore';
 
 export default function ReportsIndexPage() {
+  const { t } = useLangStore();
+
+  const REPORTS = [
+    { href: '/reports/daily',            title: t.reports.daily,            description: t.reports.daily_desc },
+    { href: '/reports/daily-position',   title: t.reports.daily_position,   description: t.reports.daily_position_desc },
+    { href: '/reports/monthly',          title: t.reports.monthly,          description: t.reports.monthly_desc },
+    { href: '/reports/income-statement', title: t.reports.income_statement, description: t.reports.income_statement_desc },
+    { href: '/reports/sales',            title: t.reports.sales,            description: t.reports.sales_desc },
+    { href: '/reports/transactions',     title: t.reports.transactions,     description: t.reports.transactions_desc },
+    { href: '/reports/invoices',         title: t.reports.invoices,         description: t.reports.invoices_desc },
+    { href: '/reports/shifts',           title: t.reports.shifts,           description: t.reports.shifts_desc },
+  ];
+
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Laporan</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">{t.reports.title}</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {REPORTS.map((r) => (
           <Link

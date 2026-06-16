@@ -23,18 +23,40 @@ function mapCustomer(row: CustomerRow): Customer {
   };
 }
 
-export async function findAll(db: SqlDb, search?: string): Promise<Customer[]> {
+export async function count(db: SqlDb, search?: string): Promise<number> {
   if (search) {
     const pattern = `%${search}%`;
+    const rows = await db<{ n: string }>`
+      SELECT COUNT(*) AS n FROM customers
+      WHERE no_hp ILIKE ${pattern} OR nama ILIKE ${pattern}
+    `;
+    return Number(rows[0]?.n ?? 0);
+  }
+  const rows = await db<{ n: string }>`SELECT COUNT(*) AS n FROM customers`;
+  return Number(rows[0]?.n ?? 0);
+}
+
+export async function findAll(
+  db: SqlDb,
+  opts?: { search?: string; page?: number; limit?: number }
+): Promise<Customer[]> {
+  const page  = Math.max(1, opts?.page  ?? 1);
+  const limit = Math.min(200, Math.max(1, opts?.limit ?? 50));
+  const offset = (page - 1) * limit;
+
+  if (opts?.search) {
+    const pattern = `%${opts.search}%`;
     const rows = await db<CustomerRow>`
       SELECT * FROM customers
       WHERE no_hp ILIKE ${pattern} OR nama ILIKE ${pattern}
       ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
     `;
     return rows.map(mapCustomer);
   }
   const rows = await db<CustomerRow>`
     SELECT * FROM customers ORDER BY created_at DESC
+    LIMIT ${limit} OFFSET ${offset}
   `;
   return rows.map(mapCustomer);
 }

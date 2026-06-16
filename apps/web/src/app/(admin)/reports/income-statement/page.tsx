@@ -1,10 +1,13 @@
 'use client';
 import { useState } from 'react';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import { useIncomeStatement } from '@/hooks/useReports';
+import { useLangStore } from '@/store/langStore';
 import { formatIDR } from '@/lib/utils';
 import { Printer } from 'lucide-react';
 
 export default function IncomeStatementPage() {
+  const { t } = useLangStore();
   const now = new Date();
   const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const today = now.toISOString().slice(0, 10);
@@ -31,8 +34,9 @@ export default function IncomeStatementPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.income_statement }]} />
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Laba Rugi</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.reports.income_statement}</h1>
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 rounded border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -44,7 +48,7 @@ export default function IncomeStatementPage() {
 
       {/* Print header */}
       <div className="hidden print:block mb-4">
-        <h1 className="text-xl font-bold">Laundry Palu — Laporan Laba Rugi</h1>
+        <h1 className="text-xl font-bold">{t.app.name} — {t.reports.income_statement}</h1>
         <p className="text-sm text-gray-500">{applied.from} s/d {applied.to}</p>
       </div>
 
@@ -66,7 +70,7 @@ export default function IncomeStatementPage() {
         </button>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}

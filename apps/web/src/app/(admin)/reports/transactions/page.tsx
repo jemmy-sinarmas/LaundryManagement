@@ -5,15 +5,8 @@ import { formatIDR, formatDate } from '@/lib/utils';
 import { DatePeriodFilter, computePreset } from '@/components/DatePeriodFilter';
 import type { DateRange } from '@/components/DatePeriodFilter';
 import { ORDER_STATUSES } from '@laundry-palu/shared';
-
-const STATUS_LABELS: Record<string, string> = {
-  diterima:     'Diterima',
-  dicuci:       'Dicuci',
-  dikeringkan:  'Dikeringkan',
-  dibungkus:    'Dibungkus',
-  siap_diambil: 'Siap Diambil',
-  selesai:      'Selesai',
-};
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useLangStore } from '@/store/langStore';
 
 const STATUS_COLORS: Record<string, string> = {
   diterima:     'bg-gray-100 text-gray-700',
@@ -42,6 +35,7 @@ type TransactionsData = {
 };
 
 export default function TransactionsReportPage() {
+  const { t } = useLangStore();
   const [range, setRange] = useState<DateRange>(computePreset('this_month'));
   const [filterStatus, setFilterStatus] = useState('');
   const [data, setData] = useState<TransactionsData | null>(null);
@@ -67,7 +61,8 @@ export default function TransactionsReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Laporan Transaksi</h1>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.transactions }]} />
+      <h1 className="text-2xl font-bold text-gray-900">{t.reports.transactions}</h1>
 
       <div className="rounded-lg border bg-white p-4 shadow-sm">
         <DatePeriodFilter value={range} onChange={setRange} />
@@ -77,15 +72,15 @@ export default function TransactionsReportPage() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
           >
-            <option value="">Semua Status</option>
+            <option value="">{t.orders.filter_status}</option>
             {ORDER_STATUSES.map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+              <option key={s} value={s}>{t.status[s as keyof typeof t.status] ?? s}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
@@ -116,7 +111,7 @@ export default function TransactionsReportPage() {
                     <td className="px-5 py-3 text-sm text-gray-700">{o.customerNama}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {STATUS_LABELS[o.status] ?? o.status}
+                        {t.status[o.status as keyof typeof t.status] ?? o.status}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-sm font-medium text-gray-900">{formatIDR(o.total)}</td>

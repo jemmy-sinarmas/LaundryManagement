@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { toast } from '@/store/toastStore';
+import { useLangStore } from '@/store/langStore';
 import type { Branch } from '@laundry-palu/shared';
 import { X } from 'lucide-react';
 
@@ -15,6 +16,7 @@ function CreateBranchModal({
   onSubmit: (data: CreateForm) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useLangStore();
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ function CreateBranchModal({
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal menambah cabang';
+      const msg = err instanceof Error ? err.message : t.common.error;
       setError(msg);
     } finally {
       setLoading(false);
@@ -38,7 +40,7 @@ function CreateBranchModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Tambah Cabang</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.branches.new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
         </div>
         {error && (
@@ -46,7 +48,7 @@ function CreateBranchModal({
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Cabang</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.branches.name}</label>
             <input
               type="text"
               value={form.nama}
@@ -71,7 +73,7 @@ function CreateBranchModal({
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Alamat <span className="text-gray-400">(opsional)</span>
+              {t.branches.address} <span className="text-gray-400">{t.common.optional}</span>
             </label>
             <textarea
               value={form.alamat}
@@ -83,10 +85,10 @@ function CreateBranchModal({
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-              Batal
+              {t.common.cancel}
             </button>
             <button type="submit" disabled={loading} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? t.common.saving : t.common.save}
             </button>
           </div>
         </form>
@@ -106,6 +108,7 @@ function EditBranchModal({
   onSubmit: (data: EditForm) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useLangStore();
   const [form, setForm] = useState<EditForm>({
     nama: branch.nama,
     alamat: branch.alamat ?? '',
@@ -122,7 +125,7 @@ function EditBranchModal({
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal memperbarui cabang');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
@@ -132,7 +135,7 @@ function EditBranchModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Edit Cabang — {branch.kode}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.common.edit} — {branch.kode}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
         </div>
         {error && (
@@ -140,7 +143,7 @@ function EditBranchModal({
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Cabang</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.branches.name}</label>
             <input
               type="text"
               value={form.nama}
@@ -150,7 +153,7 @@ function EditBranchModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Alamat</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.branches.address}</label>
             <textarea
               value={form.alamat}
               onChange={(e) => setForm({ ...form, alamat: e.target.value })}
@@ -166,14 +169,14 @@ function EditBranchModal({
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               className="h-4 w-4 rounded border-gray-300 text-blue-600"
             />
-            <label htmlFor="isActive" className="text-sm text-gray-700">Aktif</label>
+            <label htmlFor="isActive" className="text-sm text-gray-700">{t.common.active}</label>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-              Batal
+              {t.common.cancel}
             </button>
             <button type="submit" disabled={loading} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? t.common.saving : t.common.save}
             </button>
           </div>
         </form>
@@ -183,6 +186,7 @@ function EditBranchModal({
 }
 
 export default function BranchesPage() {
+  const { t } = useLangStore();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -194,11 +198,11 @@ export default function BranchesPage() {
       const data = await api.get<Branch[]>('/api/v1/branches');
       setBranches(data);
     } catch {
-      toast.error('Gagal memuat data cabang');
+      toast.error(t.common.error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { void fetchBranches(); }, [fetchBranches]);
 
@@ -225,12 +229,12 @@ export default function BranchesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manajemen Cabang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.branches.title}</h1>
         <button
           onClick={() => setShowCreate(true)}
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          + Tambah Cabang
+          {t.branches.new}
         </button>
       </div>
 
@@ -238,16 +242,16 @@ export default function BranchesPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Kode', 'Nama', 'Alamat', 'Status', 'Aksi'].map((h) => (
+              {['Kode', t.branches.name, t.branches.address, t.common.status, t.common.actions].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">Memuat...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
             ) : branches.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">Belum ada cabang.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">{t.branches.empty}</td></tr>
             ) : (
               branches.map((branch) => (
                 <tr key={branch.id} className="hover:bg-gray-50">
@@ -258,7 +262,7 @@ export default function BranchesPage() {
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                       branch.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {branch.isActive ? 'Aktif' : 'Nonaktif'}
+                      {branch.isActive ? t.common.active : t.common.inactive}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -266,7 +270,7 @@ export default function BranchesPage() {
                       onClick={() => setEditBranch(branch)}
                       className="rounded border px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
                     >
-                      Edit
+                      {t.common.edit}
                     </button>
                   </td>
                 </tr>

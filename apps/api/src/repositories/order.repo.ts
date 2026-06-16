@@ -233,59 +233,64 @@ export async function findByCustomerNoHp(db: SqlDb, noHp: string): Promise<Order
 
 export async function findAll(
   db: SqlDb,
-  opts?: { customerId?: string; status?: string; branchId?: string | null }
-): Promise<Order[]> {
-  const branchId = opts?.branchId;
+  opts?: { customerId?: string; status?: string; branchId?: string | null; page?: number; limit?: number }
+): Promise<{ data: Order[]; hasMore: boolean }> {
+  const branchId   = opts?.branchId;
   const customerId = opts?.customerId;
-  const status = opts?.status;
+  const status     = opts?.status;
+  const page  = Math.max(1, opts?.page  ?? 1);
+  const limit = Math.min(500, Math.max(1, opts?.limit ?? 100));
+  const fetch = limit + 1; // one extra to detect hasMore
+  const offset = (page - 1) * limit;
+
+  let rows: OrderRow[];
 
   if (branchId) {
     if (customerId && status) {
-      const rows = await db<OrderRow>`
+      rows = await db<OrderRow>`
         SELECT * FROM orders
         WHERE branch_id = ${branchId} AND customer_id = ${customerId} AND status = ${status}
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
       `;
-      return rows.map(mapOrder);
-    }
-    if (customerId) {
-      const rows = await db<OrderRow>`
-        SELECT * FROM orders WHERE branch_id = ${branchId} AND customer_id = ${customerId} ORDER BY created_at DESC
+    } else if (customerId) {
+      rows = await db<OrderRow>`
+        SELECT * FROM orders WHERE branch_id = ${branchId} AND customer_id = ${customerId}
+        ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
       `;
-      return rows.map(mapOrder);
-    }
-    if (status) {
-      const rows = await db<OrderRow>`
-        SELECT * FROM orders WHERE branch_id = ${branchId} AND status = ${status} ORDER BY created_at DESC
+    } else if (status) {
+      rows = await db<OrderRow>`
+        SELECT * FROM orders WHERE branch_id = ${branchId} AND status = ${status}
+        ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
       `;
-      return rows.map(mapOrder);
+    } else {
+      rows = await db<OrderRow>`
+        SELECT * FROM orders WHERE branch_id = ${branchId}
+        ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
+      `;
     }
-    const rows = await db<OrderRow>`SELECT * FROM orders WHERE branch_id = ${branchId} ORDER BY created_at DESC`;
-    return rows.map(mapOrder);
+  } else if (customerId && status) {
+    rows = await db<OrderRow>`
+      SELECT * FROM orders WHERE customer_id = ${customerId} AND status = ${status}
+      ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
+    `;
+  } else if (customerId) {
+    rows = await db<OrderRow>`
+      SELECT * FROM orders WHERE customer_id = ${customerId}
+      ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
+    `;
+  } else if (status) {
+    rows = await db<OrderRow>`
+      SELECT * FROM orders WHERE status = ${status}
+      ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
+    `;
+  } else {
+    rows = await db<OrderRow>`
+      SELECT * FROM orders ORDER BY created_at DESC LIMIT ${fetch} OFFSET ${offset}
+    `;
   }
 
-  if (customerId && status) {
-    const rows = await db<OrderRow>`
-      SELECT * FROM orders
-      WHERE customer_id = ${customerId} AND status = ${status}
-      ORDER BY created_at DESC
-    `;
-    return rows.map(mapOrder);
-  }
-  if (customerId) {
-    const rows = await db<OrderRow>`
-      SELECT * FROM orders WHERE customer_id = ${customerId} ORDER BY created_at DESC
-    `;
-    return rows.map(mapOrder);
-  }
-  if (status) {
-    const rows = await db<OrderRow>`
-      SELECT * FROM orders WHERE status = ${status} ORDER BY created_at DESC
-    `;
-    return rows.map(mapOrder);
-  }
-  const rows = await db<OrderRow>`SELECT * FROM orders ORDER BY created_at DESC`;
-  return rows.map(mapOrder);
+  const hasMore = rows.length > limit;
+  return { data: rows.slice(0, limit).map(mapOrder), hasMore };
 }
 
 export async function findByPickupToken(db: SqlDb, token: string): Promise<Order | null> {

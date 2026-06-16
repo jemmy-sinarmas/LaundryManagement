@@ -2,18 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
+import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import type { Order } from '@laundry-palu/shared';
 import { ORDER_STATUSES, getPreviousStatus } from '@laundry-palu/shared';
 import { X } from 'lucide-react';
-
-const STATUS_LABELS: Record<string, string> = {
-  diterima:      'Diterima',
-  dicuci:        'Dicuci',
-  dikeringkan:   'Dikeringkan',
-  dibungkus:     'Dibungkus',
-  siap_diambil:  'Siap Diambil',
-  selesai:       'Selesai',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   diterima:     'bg-gray-100 text-gray-700',
@@ -33,6 +26,7 @@ function RevertModal({
   onConfirm: (catatan: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useLangStore();
   const [catatan, setCatatan] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +34,14 @@ function RevertModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!catatan.trim()) { setError('Catatan wajib diisi'); return; }
+    if (!catatan.trim()) { setError(t.antrian.revert_required); return; }
     setError(null);
     setLoading(true);
     try {
       await onConfirm(catatan.trim());
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal membatalkan status');
+      setError(err instanceof Error ? err.message : t.antrian.revert_error);
     } finally {
       setLoading(false);
     }
@@ -57,16 +51,16 @@ function RevertModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Batalkan Status</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.antrian.revert_title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
         </div>
 
         <p className="mb-4 text-sm text-gray-600">
           Status akan diubah dari{' '}
-          <span className="font-medium">{STATUS_LABELS[order.status] ?? order.status}</span>
+          <span className="font-medium">{t.status[order.status as keyof typeof t.status] ?? order.status}</span>
           {' '}kembali ke{' '}
           <span className="font-medium text-orange-600">
-            {previousStatus ? (STATUS_LABELS[previousStatus] ?? previousStatus) : '—'}
+            {previousStatus ? (t.status[previousStatus as keyof typeof t.status] ?? previousStatus) : '—'}
           </span>
         </p>
 
@@ -79,13 +73,13 @@ function RevertModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Alasan pembatalan <span className="text-red-500">*</span>
+              {t.antrian.revert_reason} <span className="text-red-500">*</span>
             </label>
             <textarea
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               rows={3}
-              placeholder="Tuliskan alasan pembatalan status..."
+              placeholder={t.antrian.revert_placeholder}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               required
             />
@@ -96,14 +90,14 @@ function RevertModal({
               onClick={onClose}
               className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              Batal
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={loading || !catatan.trim()}
               className="rounded bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
             >
-              {loading ? 'Memproses...' : 'Konfirmasi Pembatalan'}
+              {loading ? t.common.processing : t.antrian.revert_confirm}
             </button>
           </div>
         </form>
@@ -113,6 +107,7 @@ function RevertModal({
 }
 
 export default function KasirOrdersPage() {
+  const { t } = useLangStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -121,10 +116,10 @@ export default function KasirOrdersPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.get<Order[]>('/api/v1/orders');
-      setOrders(data);
+      const res = await api.get<{ data: Order[] }>('/api/v1/orders?limit=200');
+      setOrders(res.data);
     } catch {
-      // silent — table stays empty
+      toast.error(t.orders.error_load);
     } finally {
       setLoading(false);
     }
@@ -144,7 +139,7 @@ export default function KasirOrdersPage() {
       });
       setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
     } catch {
-      // silent — status unchanged
+      toast.error(t.common.error);
     } finally {
       setUpdating(null);
     }
@@ -165,12 +160,12 @@ export default function KasirOrdersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Pesanan Aktif</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.antrian.title}</h1>
         <button
           onClick={() => void fetchOrders()}
           className="rounded border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
         >
-          Refresh
+          {t.antrian.refresh}
         </button>
       </div>
 
@@ -178,7 +173,7 @@ export default function KasirOrdersPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Invoice', 'Pelanggan', 'Total', 'Status', 'Aksi'].map((h) => (
+              {['Invoice', t.nav.customers, t.pos.total, t.common.status, t.common.actions].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
@@ -192,13 +187,16 @@ export default function KasirOrdersPage() {
             {loading ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">
-                  Memuat...
+                  {t.common.loading}
                 </td>
               </tr>
             ) : activeOrders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">
-                  Tidak ada pesanan aktif.
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">
+                  {t.antrian.empty}{' '}
+                  <a href="/pos" className="text-blue-600 hover:underline">
+                    {t.antrian.cta_pos}
+                  </a>
                 </td>
               </tr>
             ) : (
@@ -223,7 +221,7 @@ export default function KasirOrdersPage() {
                           STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {STATUS_LABELS[order.status] ?? order.status}
+                        {t.status[order.status as keyof typeof t.status] ?? order.status}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -236,7 +234,7 @@ export default function KasirOrdersPage() {
                           >
                             {updating === order.id
                               ? '...'
-                              : `→ ${STATUS_LABELS[nextStatus] ?? nextStatus}`}
+                              : `${t.antrian.advance} ${t.status[nextStatus as keyof typeof t.status] ?? nextStatus}`}
                           </button>
                         )}
                         {prevStatus && (

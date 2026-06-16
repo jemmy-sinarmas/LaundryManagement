@@ -3,19 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import { formatIDR, formatDate } from '@/lib/utils';
 import { DatePeriodFilter, computePreset } from '@/components/DatePeriodFilter';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import type { DateRange } from '@/components/DatePeriodFilter';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
 import type { Order } from '@laundry-palu/shared';
 import { FileText } from 'lucide-react';
-
-const STATUS_LABELS: Record<string, string> = {
-  diterima:     'Diterima',
-  dicuci:       'Dicuci',
-  dikeringkan:  'Dikeringkan',
-  dibungkus:    'Dibungkus',
-  siap_diambil: 'Siap Diambil',
-  selesai:      'Selesai',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   diterima:     'bg-gray-100 text-gray-700',
@@ -44,6 +38,7 @@ type InvoicesData = {
 };
 
 export default function InvoicesReportPage() {
+  const { t } = useLangStore();
   const [range, setRange] = useState<DateRange>(computePreset('this_month'));
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
@@ -83,7 +78,7 @@ export default function InvoicesReportPage() {
       const order = await api.get<Order>(`/api/v1/orders/${id}`);
       setPreviewOrder(order);
     } catch {
-      // silent
+      toast.error(t.common.error);
     } finally {
       setLoadingPreview(null);
     }
@@ -91,7 +86,8 @@ export default function InvoicesReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Laporan Faktur</h1>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.invoices }]} />
+      <h1 className="text-2xl font-bold text-gray-900">{t.reports.invoices}</h1>
 
       <div className="rounded-lg border bg-white p-4 shadow-sm space-y-3">
         <DatePeriodFilter value={range} onChange={setRange} />
@@ -104,7 +100,7 @@ export default function InvoicesReportPage() {
         />
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
@@ -135,7 +131,7 @@ export default function InvoicesReportPage() {
                     <td className="px-5 py-3 text-sm text-gray-700">{inv.customerNama}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {STATUS_LABELS[inv.status] ?? inv.status}
+                        {t.status[inv.status as keyof typeof t.status] ?? inv.status}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-sm font-medium text-gray-900">{formatIDR(inv.total)}</td>

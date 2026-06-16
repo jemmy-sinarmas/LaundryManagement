@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
 import { DatePeriodFilter, computePreset } from '@/components/DatePeriodFilter';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useLangStore } from '@/store/langStore';
 import type { DateRange } from '@/components/DatePeriodFilter';
 
 const TIPE_LABELS: Record<string, string> = {
@@ -22,6 +24,7 @@ type SalesData = {
 };
 
 export default function SalesReportPage() {
+  const { t } = useLangStore();
   const [range, setRange] = useState<DateRange>(computePreset('this_month'));
   const [data, setData] = useState<SalesData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,13 +47,14 @@ export default function SalesReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Laporan Penjualan</h1>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.sales }]} />
+      <h1 className="text-2xl font-bold text-gray-900">{t.reports.sales}</h1>
 
       <div className="rounded-lg border bg-white p-4 shadow-sm">
         <DatePeriodFilter value={range} onChange={(r) => { setRange(r); }} />
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}

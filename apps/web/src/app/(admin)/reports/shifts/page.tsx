@@ -5,6 +5,8 @@ import { formatIDR } from '@/lib/utils';
 import { DatePeriodFilter, computePreset } from '@/components/DatePeriodFilter';
 import type { DateRange } from '@/components/DatePeriodFilter';
 import type { Branch } from '@laundry-palu/shared';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import { useLangStore } from '@/store/langStore';
 
 type ShiftReportItem = {
   id: string;
@@ -40,6 +42,7 @@ function shortDatetime(iso: string): string {
 }
 
 export default function ShiftsReportPage() {
+  const { t } = useLangStore();
   const [range, setRange] = useState<DateRange>(computePreset('this_month'));
   const [filterBranch, setFilterBranch] = useState('');
   const [data, setData] = useState<ShiftsData | null>(null);
@@ -70,7 +73,8 @@ export default function ShiftsReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Laporan Shift</h1>
+      <Breadcrumb items={[{ label: t.reports.title, href: '/reports' }, { label: t.reports.shifts }]} />
+      <h1 className="text-2xl font-bold text-gray-900">{t.reports.shifts}</h1>
 
       <div className="rounded-lg border bg-white p-4 shadow-sm space-y-3">
         <DatePeriodFilter value={range} onChange={setRange} />
@@ -79,14 +83,14 @@ export default function ShiftsReportPage() {
           onChange={(e) => setFilterBranch(e.target.value)}
           className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
         >
-          <option value="">Semua Cabang</option>
+          <option value="">{t.common.all_branches}</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>{b.nama}</option>
           ))}
         </select>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Memuat...</p>}
+      {loading && <p className="text-sm text-gray-400">{t.common.loading}</p>}
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}

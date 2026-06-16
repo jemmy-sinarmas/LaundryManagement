@@ -3,15 +3,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, ClipboardList, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const ITEMS = [
-  { href: '/pos',    label: 'Kasir',   icon: ShoppingCart },
-  { href: '/antrian', label: 'Pesanan', icon: ClipboardList },
-  { href: '/shift',  label: 'Shift',   icon: Clock },
-];
+import { useLangStore } from '@/store/langStore';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLangStore();
+
+  const ITEMS = [
+    { href: '/pos',     label: t.nav.pos,     icon: ShoppingCart },
+    { href: '/antrian', label: t.nav.antrian,  icon: ClipboardList },
+    { href: '/shift',   label: t.nav.shift,    icon: Clock },
+  ];
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 flex border-t bg-white">
       {ITEMS.map(({ href, label, icon: Icon }) => (

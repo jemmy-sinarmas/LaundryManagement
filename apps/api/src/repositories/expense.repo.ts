@@ -135,6 +135,7 @@ export async function findAll(
            inventory_item_id, qty_used, branch_id, created_by, created_at
     FROM expenses
     ORDER BY tanggal DESC, created_at DESC
+    LIMIT 500
   `;
   return rows.map(mapRow);
 }

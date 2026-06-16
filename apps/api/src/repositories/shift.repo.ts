@@ -111,6 +111,7 @@ export async function findAll(
       JOIN branches b ON b.id = s.branch_id
       WHERE s.branch_id = ${branchId}
       ORDER BY s.start_time DESC
+      LIMIT 500
     `;
     return rows.map(mapRow);
   }
@@ -131,6 +132,7 @@ export async function findAll(
     JOIN users    u ON u.id = s.kasir_id
     JOIN branches b ON b.id = s.branch_id
     ORDER BY s.start_time DESC
+    LIMIT 500
   `;
   return rows.map(mapRow);
 }

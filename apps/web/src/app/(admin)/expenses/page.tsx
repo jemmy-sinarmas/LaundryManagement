@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useLangStore } from '@/store/langStore';
 import ExpenseForm from '@/components/expenses/ExpenseForm';
 import { formatIDR } from '@/lib/utils';
 
@@ -11,13 +12,14 @@ const LEVEL_COLORS: Record<string, string> = {
 
 export default function ExpensesPage() {
   const { expenses, categories, inventoryItems, loading, error, createExpense } = useExpenses();
+  const { t } = useLangStore();
   const [showForm, setShowForm] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   async function handleSubmit(data: Parameters<typeof createExpense>[0]) {
     await createExpense(data);
     setShowForm(false);
-    setSuccessMsg('Pengeluaran berhasil disimpan.');
+    setSuccessMsg(t.expenses.save_success);
     setTimeout(() => setSuccessMsg(null), 3000);
   }
 
@@ -27,7 +29,7 @@ export default function ExpensesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pengeluaran</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.expenses.title}</h1>
           {!loading && (
             <p className="mt-1 text-sm text-gray-500">
               Total: <span className="font-medium text-gray-900">{formatIDR(total)}</span>
@@ -39,13 +41,13 @@ export default function ExpensesPage() {
             href="/expenses/categories"
             className="rounded border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
-            Kategori
+            {t.expenses.categories_link}
           </a>
           <button
             onClick={() => setShowForm(true)}
             className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            + Catat Pengeluaran
+            {t.expenses.new}
           </button>
         </div>
       </div>
@@ -64,7 +66,7 @@ export default function ExpensesPage() {
       {/* Quick-entry panel */}
       {showForm && (
         <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-gray-900">Catat Pengeluaran Baru</h2>
+          <h2 className="mb-4 text-base font-semibold text-gray-900">{t.expenses.form_title}</h2>
           <ExpenseForm
             categories={categories}
             inventoryItems={inventoryItems}
@@ -78,7 +80,7 @@ export default function ExpensesPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Tanggal', 'Jumlah', 'Kategori', 'Deskripsi', 'Inventori'].map((h) => (
+              {[t.expenses.date, t.expenses.amount, t.expenses.category, t.expenses.description, t.expenses.inventory_col].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
@@ -91,11 +93,16 @@ export default function ExpensesPage() {
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">Memuat...</td>
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td>
               </tr>
             ) : expenses.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">Belum ada pengeluaran.</td>
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">
+                  {t.expenses.empty}{' '}
+                  <button onClick={() => setShowForm(true)} className="text-blue-600 hover:underline">
+                    {t.expenses.cta_add}
+                  </button>
+                </td>
               </tr>
             ) : (
               expenses.map((e) => (

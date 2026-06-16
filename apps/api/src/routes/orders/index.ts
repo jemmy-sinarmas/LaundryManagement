@@ -30,14 +30,18 @@ const orderRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.get('/', authOnly, async (req, reply) => {
-    const { customer_id, status, branch_id } = req.query as { customer_id?: string; status?: string; branch_id?: string };
+    const { customer_id, status, branch_id, page, limit } = req.query as {
+      customer_id?: string; status?: string; branch_id?: string; page?: string; limit?: string;
+    };
     const isAdmin = req.user.role === 'admin';
     const branchId = isAdmin ? (branch_id ?? null) : req.user.branchId;
-    const opts: { customerId?: string; status?: string; branchId?: string | null } = { branchId };
+    const opts: { customerId?: string; status?: string; branchId?: string | null; page?: number; limit?: number } = { branchId };
     if (customer_id !== undefined) opts.customerId = customer_id;
-    if (status !== undefined) opts.status = status;
-    const orders = await orderService.listOrders(fastify.db, opts);
-    reply.send(orders);
+    if (status       !== undefined) opts.status = status;
+    if (page         !== undefined) opts.page  = Number(page);
+    if (limit        !== undefined) opts.limit = Number(limit);
+    const result = await orderService.listOrders(fastify.db, opts);
+    reply.send(result);
   });
 
   // pickup QR routes — must be before /:id to avoid conflict

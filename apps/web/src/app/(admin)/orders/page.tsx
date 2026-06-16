@@ -2,19 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
+import { useLangStore } from '@/store/langStore';
+import { toast } from '@/store/toastStore';
 import type { Order, Branch } from '@laundry-palu/shared';
 import { ORDER_STATUSES } from '@laundry-palu/shared';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
 import { FileText } from 'lucide-react';
-
-const STATUS_LABELS: Record<string, string> = {
-  diterima:     'Diterima',
-  dicuci:       'Dicuci',
-  dikeringkan:  'Dikeringkan',
-  dibungkus:    'Dibungkus',
-  siap_diambil: 'Siap Diambil',
-  selesai:      'Selesai',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   diterima:     'bg-gray-100 text-gray-700',
@@ -26,27 +19,30 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminOrdersPage() {
+  const { t } = useLangStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   const [filterBranch, setFilterBranch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSearch, setFilterSearch] = useState('');
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (p: number) => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ page: String(p), limit: '100' });
       if (filterBranch) params.set('branch_id', filterBranch);
       if (filterStatus) params.set('status', filterStatus);
-      const qs = params.size > 0 ? `?${params.toString()}` : '';
-      const data = await api.get<Order[]>(`/api/v1/orders${qs}`);
-      setOrders(data);
+      const res = await api.get<{ data: Order[]; hasMore: boolean }>(`/api/v1/orders?${params.toString()}`);
+      setOrders(res.data);
+      setHasMore(res.hasMore);
     } catch {
-      // silent
+      toast.error(t.orders.error_load);
     } finally {
       setLoading(false);
     }
@@ -56,7 +52,8 @@ export default function AdminOrdersPage() {
     api.get<Branch[]>('/api/v1/branches').then(setBranches).catch(() => undefined);
   }, []);
 
-  useEffect(() => { void fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { setPage(1); }, [filterBranch, filterStatus]);
+  useEffect(() => { void fetchOrders(page); }, [fetchOrders, page]);
 
   async function handlePreview(order: Order) {
     setLoadingPreview(order.id);
@@ -64,7 +61,7 @@ export default function AdminOrdersPage() {
       const full = await api.get<Order>(`/api/v1/orders/${order.id}`);
       setPreviewOrder(full);
     } catch {
-      // silent
+      toast.error(t.common.error);
     } finally {
       setLoadingPreview(null);
     }
@@ -82,12 +79,12 @@ export default function AdminOrdersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Semua Pesanan</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.orders.title}</h1>
         <button
-          onClick={() => void fetchOrders()}
+          onClick={() => void fetchOrders(page)}
           className="rounded border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
         >
-          Refresh
+          {t.common.refresh}
         </button>
       </div>
 
@@ -95,7 +92,7 @@ export default function AdminOrdersPage() {
       <div className="mb-4 flex flex-wrap gap-3">
         <input
           type="text"
-          placeholder="Cari invoice / pelanggan..."
+          placeholder={t.orders.search_placeholder}
           value={filterSearch}
           onChange={(e) => setFilterSearch(e.target.value)}
           className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -105,7 +102,7 @@ export default function AdminOrdersPage() {
           onChange={(e) => setFilterBranch(e.target.value)}
           className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
         >
-          <option value="">Semua Cabang</option>
+          <option value="">{t.orders.filter_branch}</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>{b.nama}</option>
           ))}
@@ -115,9 +112,9 @@ export default function AdminOrdersPage() {
           onChange={(e) => setFilterStatus(e.target.value)}
           className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
         >
-          <option value="">Semua Status</option>
+          <option value="">{t.orders.filter_status}</option>
           {ORDER_STATUSES.map((s) => (
-            <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+            <option key={s} value={s}>{t.status[s as keyof typeof t.status] ?? s}</option>
           ))}
         </select>
       </div>
@@ -126,8 +123,8 @@ export default function AdminOrdersPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Invoice', 'Pelanggan', 'Cabang', 'Status', 'Total', 'Tanggal', 'Aksi'].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              {[t.orders.invoice, t.orders.customer, t.orders.branch, t.common.status, t.orders.total, t.orders.date, t.common.actions].map((h, i) => (
+                <th key={i} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                   {h}
                 </th>
               ))}
@@ -135,9 +132,21 @@ export default function AdminOrdersPage() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">Memuat...</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">{t.common.loading}</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">Tidak ada pesanan.</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">
+                  {filterSearch || filterBranch || filterStatus
+                    ? t.orders.empty_filtered
+                    : (
+                      <span>
+                        {t.orders.empty}{' '}
+                        <a href="/pos" className="text-blue-600 hover:underline">{t.orders.cta_pos}</a>
+                      </span>
+                    )
+                  }
+                </td>
+              </tr>
             ) : (
               filtered.map((order) => {
                 const branch = branches.find((b) => b.id === order.branchId);
@@ -148,7 +157,7 @@ export default function AdminOrdersPage() {
                     <td className="px-4 py-3 text-sm text-gray-500">{branch?.nama ?? '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {STATUS_LABELS[order.status] ?? order.status}
+                        {t.status[order.status as keyof typeof t.status] ?? order.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{formatIDR(order.total)}</td>
@@ -160,7 +169,7 @@ export default function AdminOrdersPage() {
                         className="flex items-center gap-1.5 rounded border px-3 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                       >
                         <FileText size={12} />
-                        {loadingPreview === order.id ? '...' : 'Preview Nota'}
+                        {loadingPreview === order.id ? '...' : t.orders.preview}
                       </button>
                     </td>
                   </tr>
@@ -170,6 +179,29 @@ export default function AdminOrdersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {!loading && (page > 1 || hasMore) && (
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <span>{t.common.page} {page}{hasMore ? '+' : ''}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={page <= 1}
+              className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-40"
+            >
+              ← {t.common.prev}
+            </button>
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={!hasMore || filterSearch !== ''}
+              className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-40"
+            >
+              {t.common.next} →
+            </button>
+          </div>
+        </div>
+      )}
 
       {previewOrder && (
         <PrintableInvoice order={previewOrder} onClose={() => setPreviewOrder(null)} />

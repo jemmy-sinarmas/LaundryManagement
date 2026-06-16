@@ -10,8 +10,24 @@ function makeError(message: string, statusCode: number): Error & { statusCode: n
   return err;
 }
 
-export async function listCustomers(db: SqlDb, search?: string): Promise<Customer[]> {
-  return customerRepo.findAll(db, search);
+export type PaginatedCustomers = {
+  data: Customer[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export async function listCustomers(
+  db: SqlDb,
+  opts?: { search?: string; page?: number; limit?: number }
+): Promise<PaginatedCustomers> {
+  const page  = Math.max(1, opts?.page  ?? 1);
+  const limit = Math.min(200, Math.max(1, opts?.limit ?? 50));
+  const [data, total] = await Promise.all([
+    customerRepo.findAll(db, opts),
+    customerRepo.count(db, opts?.search),
+  ]);
+  return { data, total, page, limit };
 }
 
 export async function getCustomer(db: SqlDb, id: string): Promise<Customer> {

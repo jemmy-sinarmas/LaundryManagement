@@ -2,18 +2,13 @@
 import { useState } from 'react';
 import { usePOS } from '@/hooks/usePOS';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { useLangStore } from '@/store/langStore';
 import PrintableInvoice from '@/components/invoice/PrintableInvoice';
 import { api } from '@/lib/api';
 import { formatIDR } from '@/lib/utils';
 import { COUNTRY_CODES } from '@laundry-palu/shared';
 import type { Customer } from '@laundry-palu/shared';
 import { X, ShoppingCart, WifiOff, UserPlus } from 'lucide-react';
-
-const TYPE_LABELS: Record<string, string> = {
-  satuan: 'Per Satuan',
-  kiloan: 'Kiloan',
-  jasa_lain: 'Jasa Lain',
-};
 
 type NewCustomerForm = { nama: string; countryCode: string; noHp: string; alamat: string };
 const EMPTY_NEW_CUSTOMER: NewCustomerForm = { nama: '', countryCode: '+62', noHp: '', alamat: '' };
@@ -25,6 +20,7 @@ function NewCustomerModal({
   onSubmit: (data: NewCustomerForm) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useLangStore();
   const [form, setForm] = useState<NewCustomerForm>(EMPTY_NEW_CUSTOMER);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +33,7 @@ function NewCustomerModal({
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal menambah pelanggan');
+      setError(err instanceof Error ? err.message : t.customers.error_create);
     } finally {
       setLoading(false);
     }
@@ -47,7 +43,7 @@ function NewCustomerModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Tambah Pelanggan Baru</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.customers.new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
         </div>
 
@@ -59,7 +55,7 @@ function NewCustomerModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Nama Lengkap</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.customers.full_name}</label>
             <input
               type="text"
               value={form.nama}
@@ -70,7 +66,7 @@ function NewCustomerModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">No. HP</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">{t.customers.phone}</label>
             <div className="flex gap-2">
               <select
                 value={form.countryCode}
@@ -96,7 +92,7 @@ function NewCustomerModal({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Alamat <span className="text-gray-400">(opsional)</span>
+              {t.customers.address} <span className="text-gray-400">{t.common.optional}</span>
             </label>
             <input
               type="text"
@@ -112,14 +108,14 @@ function NewCustomerModal({
               onClick={onClose}
               className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              Batal
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Menyimpan...' : 'Simpan & Pilih'}
+              {loading ? t.common.saving : `${t.common.save} & Pilih`}
             </button>
           </div>
         </form>
@@ -129,6 +125,14 @@ function NewCustomerModal({
 }
 
 export default function PosPage() {
+  const { t } = useLangStore();
+
+  const TYPE_LABELS: Record<string, string> = {
+    satuan: t.items.type_per_satuan,
+    kiloan: t.items.type_kiloan,
+    jasa_lain: t.items.type_jasa_lain,
+  };
+
   const {
     items,
     activePromotions,
@@ -136,6 +140,8 @@ export default function PosPage() {
     customerResults,
     selectedCustomer, selectCustomer,
     discountPercent,
+    membership,
+    membershipWarning,
     selectedPromo, setSelectedPromo,
     metodePembayaran, setMetodePembayaran,
     jumlahDibayar, setJumlahDibayar,
@@ -150,6 +156,15 @@ export default function PosPage() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('kiloan');
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [showPosHint, setShowPosHint] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('pos_onboarded') !== '1';
+  });
+
+  function dismissPosHint() {
+    localStorage.setItem('pos_onboarded', '1');
+    setShowPosHint(false);
+  }
 
   async function handleSubmit() {
     setOrderError(null);
@@ -157,7 +172,7 @@ export default function PosPage() {
       await submitOrder(catatan || undefined);
       setCatatan('');
     } catch (err: unknown) {
-      setOrderError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+      setOrderError(err instanceof Error ? err.message : t.common.error);
     }
   }
 
@@ -179,7 +194,6 @@ export default function PosPage() {
       {/* Left panel: customer + items */}
       <div className="flex flex-1 flex-col gap-4 overflow-hidden">
 
-        {/* Offline indicator */}
         {pendingCount > 0 && (
           <div className="flex items-center gap-2 rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
             <WifiOff size={14} />
@@ -187,9 +201,25 @@ export default function PosPage() {
           </div>
         )}
 
+        {showPosHint && (
+          <div className="flex items-start justify-between gap-3 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <p>
+              <span className="font-semibold">Cara pakai POS:</span>{' '}
+              {t.pos.hint}
+            </p>
+            <button
+              onClick={dismissPosHint}
+              className="shrink-0 rounded text-blue-400 hover:text-blue-700"
+              aria-label={t.common.close}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Customer selector */}
         <div className="relative rounded-lg border bg-white p-4 shadow-sm">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Pelanggan</p>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t.nav.customers}</p>
           {selectedCustomer ? (
             <div className="flex items-center justify-between">
               <div>
@@ -199,6 +229,25 @@ export default function PosPage() {
                   <span className="mt-1 inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
                     Diskon {discountPercent}% aktif
                   </span>
+                )}
+                {membership && (
+                  <div className="mt-1.5 rounded border border-gray-100 bg-gray-50 px-2.5 py-1.5 text-xs">
+                    {membership.tipe === 'paket_kg' ? (
+                      <span className="text-gray-700">
+                        Paket Kg —{' '}
+                        <span className="font-medium text-blue-700">{membership.sisaKg} kg</span>
+                        {' '}/ {membership.paketKg} kg tersisa
+                      </span>
+                    ) : (
+                      <span className="text-gray-700">
+                        Periodik — berlaku s/d{' '}
+                        <span className="font-medium text-blue-700">{membership.tanggalSelesai.slice(0, 10)}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+                {membershipWarning && (
+                  <p className="mt-1 text-xs text-amber-600">⚠ {membershipWarning}</p>
                 )}
               </div>
               <button
@@ -212,7 +261,7 @@ export default function PosPage() {
             <>
               <input
                 type="text"
-                placeholder="Cari nama atau nomor HP..."
+                placeholder={t.customers.search_placeholder}
                 value={customerQuery}
                 onChange={(e) => setCustomerQuery(e.target.value)}
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -236,7 +285,7 @@ export default function PosPage() {
                 className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
               >
                 <UserPlus size={12} />
-                + Pelanggan Baru
+                {t.pos.new_customer}
               </button>
             </>
           )}
@@ -245,17 +294,17 @@ export default function PosPage() {
         {/* Item tabs + grid */}
         <div className="flex-1 overflow-hidden rounded-lg border bg-white shadow-sm">
           <div className="flex border-b">
-            {types.map((t) => (
+            {types.map((tp) => (
               <button
-                key={t}
-                onClick={() => setActiveType(t)}
+                key={tp}
+                onClick={() => setActiveType(tp)}
                 className={`px-4 py-2 text-sm font-medium ${
-                  activeType === t
+                  activeType === tp
                     ? 'border-b-2 border-blue-600 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {TYPE_LABELS[t] ?? t}
+                {TYPE_LABELS[tp] ?? tp}
               </button>
             ))}
           </div>
@@ -275,7 +324,7 @@ export default function PosPage() {
             ))}
             {filteredItems.length === 0 && (
               <p className="col-span-3 py-8 text-center text-sm text-gray-400">
-                Tidak ada layanan.
+                {t.common.no_data}
               </p>
             )}
           </div>
@@ -294,10 +343,9 @@ export default function PosPage() {
           )}
         </div>
 
-        {/* Cart items */}
         <div className="flex-1 overflow-y-auto space-y-3 p-4">
           {cart.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">Keranjang kosong</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t.pos.cart_empty}</p>
           ) : (
             cart.map(({ item, qty }) => (
               <div key={item.id} className="flex items-center gap-2">
@@ -327,9 +375,7 @@ export default function PosPage() {
           )}
         </div>
 
-        {/* Totals + submit */}
         <div className="space-y-3 border-t p-4">
-          {/* Promo selection */}
           {selectedCustomer && activePromotions.length > 0 && (
             <div>
               <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">Pilih Promosi</p>
@@ -356,7 +402,7 @@ export default function PosPage() {
 
           <div className="space-y-1 text-sm">
             <div className="flex justify-between text-gray-500">
-              <span>Subtotal</span>
+              <span>{t.pos.subtotal}</span>
               <span>{formatIDR(subtotal)}</span>
             </div>
             {diskonAmount > 0 && (
@@ -372,15 +418,14 @@ export default function PosPage() {
               </div>
             )}
             <div className="flex justify-between border-t pt-1 font-semibold">
-              <span>Total</span>
+              <span>{t.pos.total}</span>
               <span>{formatIDR(total)}</span>
             </div>
           </div>
 
-          {/* Payment method */}
           <div>
             <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
-              Metode Pembayaran
+              {t.pos.payment_method}
             </p>
             <div className="grid grid-cols-3 gap-1.5">
               {([['tunai', 'Tunai'], ['qris', 'QRIS'], ['transfer_bca', 'TRF BCA']] as const).map(
@@ -402,10 +447,9 @@ export default function PosPage() {
             </div>
           </div>
 
-          {/* Amount paid (leave blank for full payment) */}
           <div>
             <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-              Jumlah Dibayar
+              {t.pos.amount_paid}
             </label>
             <input
               type="number"
@@ -425,7 +469,7 @@ export default function PosPage() {
 
           <input
             type="text"
-            placeholder="Catatan (opsional)"
+            placeholder={`Catatan ${t.common.optional}`}
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
             className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -440,17 +484,15 @@ export default function PosPage() {
             disabled={submitting || !selectedCustomer || cart.length === 0}
             className="w-full rounded bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? 'Memproses...' : 'Buat Pesanan'}
+            {submitting ? t.common.processing : t.pos.process_payment}
           </button>
         </div>
       </div>
 
-      {/* Invoice modal */}
       {createdOrder && (
         <PrintableInvoice order={createdOrder} onClose={clearCreatedOrder} />
       )}
 
-      {/* New customer modal */}
       {showNewCustomer && (
         <NewCustomerModal
           onSubmit={handleNewCustomer}
