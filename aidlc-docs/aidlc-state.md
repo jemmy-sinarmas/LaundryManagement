@@ -1,5 +1,5 @@
 # AI-DLC State — Laundry Palu
-Last updated: 2026-06-09
+Last updated: 2026-06-16
 
 ## Current Phase: INCEPTION complete → CONSTRUCTION ready
 
@@ -46,6 +46,8 @@ Last updated: 2026-06-09
 | 27 | promotions-module | COMPLETE | 014_promotions.sql; Promotion type; full API (repo/service/schema/route); promo discount in order calculation; POS promo selection; admin promotions page; Promosi in sidebar; 67/67 tests |
 | 28 | shift-system | COMPLETE | 015_shifts.sql + partial unique index; Shift type in shared; shift.repo/service/schema/routes; kasir /shift page with Start/End UI; BottomNav Shift tab; 73/73 tests |
 | 29 | reports-extended | COMPLETE | DatePeriodFilter component (8 presets + custom range); /reports/sales /transactions /invoices /shifts API + repo + service; 4 new admin report pages; reports landing updated; 73/73 tests |
+| QoL | quality-of-life-sprints | COMPLETE | Post-construction: Sprint A–E (toast errors, membership visibility, notification log UI, pagination, tracking polish); commit 3534ccc |
+| QoL | secure-tracking + integration-tests | COMPLETE | Sprint F: receipt QR always points to public tracking page. Sprint G: integration test suite (buildApp factory, vitest.integration.config.ts, global-setup auto-creates laundry_palu_test, 19 tests — customers 11 + orders 8). Sprint H: /track/t/:token secure endpoint (opaque UUID, not enumerable invoice no); TrackOrderView shared component; /track/t/[token] page; commit b3b36a3 |
 
 ---
 

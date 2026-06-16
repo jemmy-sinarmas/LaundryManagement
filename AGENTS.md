@@ -37,6 +37,8 @@ laundry-palu/
 ├── apps/
 │   ├── web/                    # Next.js 14 PWA (frontend only, NO business logic)
 │   └── api/                    # Fastify 4 (all business logic lives here)
+│       ├── src/app.ts          # buildApp() factory — plugin + route registration
+│       ├── src/server.ts       # Thin entry point — calls buildApp(), then listen()
 │       ├── src/routes/         # HTTP handlers ONLY — delegate to services
 │       ├── src/services/       # Business logic (pure functions, no HTTP awareness)
 │       ├── src/repositories/   # SQL queries (no business logic)
@@ -148,7 +150,9 @@ Before starting any phase, check these two files:
 - Never deploy with a failing test suite.
 - Run `npm run db:migrate` before starting the app on a fresh environment.
 - Log every production deployment in `aidlc-docs/audit.md` with timestamp and deployer.
-- The public `/track/[invoiceNo]` route must always be tested post-deploy — it requires no auth and is customer-facing.
+- The public tracking routes must always be tested post-deploy — they require no auth and are customer-facing:
+  - `GET /api/v1/track/t/:token` (QR-linked, primary customer URL)
+  - `GET /api/v1/track/:invoiceNo` (staff/legacy lookup)
 
 ---
 
@@ -220,7 +224,10 @@ Skills activate automatically based on user intent. Files are in `docs/skills/`.
 
 7. **Soft-delete only:** `is_active = false`. Never hard-delete customers, items, or inventory.
 
-8. **Public tracking:** `/track/[invoiceNo]` — no auth. Return only: `invoice_no`, `customer_nama`, `status`, `status_history[]`, `created_at`.
+8. **Public tracking (two endpoints, no auth):**
+   - `GET /api/v1/track/t/:token` — primary customer-facing URL; token is `pickup_token` UUID printed as QR on receipt. Opaque, not enumerable.
+   - `GET /api/v1/track/:invoiceNo` — staff/legacy lookup by invoice number. Not on customer receipt.
+   - Both return full order including `statusHistory[]`, items, and totals.
 
 ---
 
@@ -252,10 +259,11 @@ row with status `skipped` instead of making a live call. See `docs/ARCHITECTURE.
 - Mock repositories — never hit real DB in unit tests
 
 ### Integration Tests (`apps/api/tests/integration/`)
-- Dedicated test DB: `laundry_palu_test`
-- `beforeAll(() => runMigrations())` — always start clean
-- Full HTTP request → response via Supertest
-- `afterEach` cleanup
+- Dedicated test DB: `laundry_palu_test` (auto-created by `global-setup.ts`)
+- Run with: `npm run test:integration` (separate config: `vitest.integration.config.ts`)
+- Use `fastify.inject()` via `buildApp()` — no HTTP server started
+- `beforeEach` truncates all tables; `beforeAll` seeds base data + acquires JWT once
+- Credentials in `apps/api/.env.test` (gitignored)
 
 ### Frontend Tests
 - Vitest + React Testing Library

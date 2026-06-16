@@ -1,7 +1,7 @@
 # Architecture Document
 ## Laundry Palu — System Architecture
-**Version:** 1.0.0  
-**Date:** 2025-06-06
+**Version:** 1.3.0  
+**Date:** 2026-06-16
 
 ---
 
@@ -55,7 +55,7 @@
 | Auth | JWT in HTTP-only cookie | Secure; stateless; works with Next.js middleware |
 | QR Code | qrcode (Node) / react-qr-code | Generate invoice QR server-side or client-side |
 | PWA | next-pwa | Service Worker + manifest via Next.js |
-| Testing | Vitest + Supertest | Fast unit/integration tests |
+| Testing | Vitest + fastify.inject() | Fast unit/integration tests; no HTTP server needed |
 
 ---
 
@@ -88,18 +88,25 @@ laundry-palu/
 │   │   │   │   │   ├── items/
 │   │   │   │   │   ├── expenses/
 │   │   │   │   │   ├── inventory/
+│   │   │   │   │   ├── orders/
+│   │   │   │   │   ├── promotions/
+│   │   │   │   │   ├── branches/
 │   │   │   │   │   └── reports/
 │   │   │   │   ├── (kasir)/    # Cashier layout
 │   │   │   │   │   ├── pos/
-│   │   │   │   │   └── orders/
-│   │   │   │   └── track/      # Public: customer order tracking
-│   │   │   │       └── [invoiceId]/
+│   │   │   │   │   ├── antrian/    # Kasir order queue (formerly /orders)
+│   │   │   │   │   ├── shift/
+│   │   │   │   │   └── pickup/[token]/
+│   │   │   │   └── track/      # Public: customer order tracking (no auth)
+│   │   │   │       ├── [invoiceId]/   # Staff/legacy lookup by invoice
+│   │   │   │       └── t/[token]/     # Customer QR tracking (opaque UUID)
 │   │   │   ├── components/
 │   │   │   │   ├── ui/         # shadcn/ui base components
 │   │   │   │   ├── layout/     # Sidebar, Header, BottomNav
 │   │   │   │   ├── pos/        # POS-specific components
 │   │   │   │   ├── reports/    # Chart components
-│   │   │   │   └── invoice/    # PrintableInvoice component
+│   │   │   │   ├── invoice/    # PrintableInvoice component
+│   │   │   │   └── TrackOrderView.tsx  # Shared tracking UI (invoice + token pages)
 │   │   │   ├── hooks/          # Custom React hooks
 │   │   │   ├── lib/
 │   │   │   │   ├── api.ts      # API client (fetch wrapper)
@@ -117,7 +124,8 @@ laundry-palu/
 │   │
 │   └── api/                    # Fastify backend
 │       ├── src/
-│       │   ├── server.ts       # Entry point; plugin registration
+│       │   ├── server.ts       # 4-line entry point (listen only)
+│       │   ├── app.ts          # buildApp() factory — imported by tests
 │       │   ├── plugins/
 │       │   │   ├── auth.ts     # JWT plugin
 │       │   │   ├── cors.ts
@@ -130,8 +138,15 @@ laundry-palu/
 │       │   │   ├── items/
 │       │   │   ├── orders/
 │       │   │   ├── expenses/
+│       │   │   ├── expense-categories/
 │       │   │   ├── inventory/
 │       │   │   ├── reports/
+│       │   │   ├── settings/
+│       │   │   ├── branches/
+│       │   │   ├── promotions/
+│       │   │   ├── shifts/
+│       │   │   ├── message-templates/
+│       │   │   ├── notification-log/
 │       │   │   └── tracking/   # Public, no auth
 │       │   ├── services/       # Business logic (pure functions)
 │       │   │   ├── order.service.ts
@@ -152,8 +167,14 @@ laundry-palu/
 │       │   ├── 002_seed.sql    # Sample data
 │       │   └── run.ts          # Migration runner
 │       ├── tests/
-│       │   ├── unit/
-│       │   └── integration/
+│       │   ├── unit/           # Pure service/util tests, no DB
+│       │   └── integration/    # Real PostgreSQL (laundry_palu_test DB)
+│       │       ├── global-setup.ts          # Creates DB + runs migrations
+│       │       ├── helpers/                 # seed, truncate, app singleton
+│       │       ├── customers.test.ts        # 11 tests
+│       │       └── orders.test.ts           # 8 tests
+│       ├── vitest.config.ts              # Unit tests only
+│       ├── vitest.integration.config.ts  # Integration tests only
 │       └── package.json
 │
 ├── packages/
@@ -413,15 +434,33 @@ All endpoints except `/api/v1/auth/login` and `/api/v1/track/*` require JWT in H
 | GET | /reports/daily | Admin | Daily report |
 | GET | /reports/monthly | Admin | Monthly revenue |
 | GET | /reports/income-statement | Admin | Income statement |
-| GET | /track/:invoiceNo | Public | Customer order tracking |
+| GET | /track/:invoiceNo | Public | Customer tracking by invoice number (staff/legacy) |
+| GET | /track/t/:token | Public | Customer tracking by pickup token UUID (QR code) |
+| GET | /track/phone/:noHp | Public | Customer tracking by phone number |
 | GET | /branches | Admin | List branches |
 | POST | /branches | Admin | Create branch |
 | PATCH | /branches/:id | Admin | Update branch |
 | GET | /orders/pickup/:token | Kasir, Admin | Fetch order by pickup token |
 | PATCH | /orders/pickup/:token/complete | Kasir, Admin | Validate pickup → advance to selesai |
+| GET | /promotions | Admin | List promotions |
+| POST | /promotions | Admin | Create promotion |
+| PATCH | /promotions/:id | Admin | Update promotion |
+| GET | /shifts | Kasir, Admin | List shifts |
+| POST | /shifts/start | Kasir | Start shift |
+| PATCH | /shifts/:id/end | Kasir | End shift |
+| GET | /settings | Admin | Get all settings |
+| PATCH | /settings | Admin | Update settings (bulk key-value) |
+| GET | /expense-categories | Admin, Kasir | List expense categories |
+| POST | /expense-categories | Admin | Create expense category |
+| GET | /reports/daily-position | Admin | Daily cash position report |
+| GET | /reports/sales | Admin | Sales report with date range |
+| GET | /reports/transactions | Admin | Transaction report |
+| GET | /reports/invoices | Admin | Invoice list report |
+| GET | /reports/shifts | Admin | Shift summary report |
 | GET | /message-templates | Admin | List WhatsApp message templates |
-| GET | /message-templates/:type | Admin | Get one template (payment_receipt/ready_for_collection) |
+| GET | /message-templates/:type | Admin | Get one template |
 | PATCH | /message-templates/:type | Admin | Update editable header/footer/isActive |
+| GET | /notification-log | Admin | List notification send history |
 
 ---
 
@@ -445,7 +484,7 @@ Offline capability is critical for POS. Orders created while offline are stored 
 - Input validation: Zod schemas on all API inputs
 - SQL: parameterised queries only (postgres.js tagged template literals)
 - CORS: restricted to own domain in production
-- Rate limiting: Fastify rate-limit plugin (100 req/min per IP on auth routes)
+- Rate limiting: Fastify rate-limit plugin (10 req/min per IP on auth routes; 100 req/min default)
 - HTTPS: enforced at reverse proxy (nginx/caddy)
 
 ---
