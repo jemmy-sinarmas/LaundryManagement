@@ -56,6 +56,7 @@ Last updated: 2026-06-16
 
 | What | Where |
 |---|---|
+| End-to-end as-built spine (start cold here) | `docs/dossier/README.md` |
 | Business requirements | `docs/PRD.md` §4 |
 | Key business rules (DO NOT change) | `AGENTS.md` → "Key Business Rules" |
 | DB schema (canonical) | `docs/database/schema.sql` |
@@ -84,5 +85,6 @@ Last updated: 2026-06-16
 
 1. Run `npm run typecheck && npm run test` (all green)
 2. Mark unit COMPLETE in this file (update Notes with any deviations)
-3. Append completion entry to `aidlc-docs/audit.md`
-4. Ask human to confirm before proceeding to next unit
+3. Refresh the affected `docs/dossier/` chapter + README index (link, don't duplicate)
+4. Append completion entry to `aidlc-docs/audit.md`
+5. Ask human to confirm before proceeding to next unit

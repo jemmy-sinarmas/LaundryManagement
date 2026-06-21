@@ -45,6 +45,7 @@ laundry-palu/
 │       └── migrations/         # Raw SQL migration files
 ├── packages/shared/            # Types and constants shared between web and api
 └── docs/                       # PRD, ARCHITECTURE, skills
+    ├── dossier/                # Canonical end-to-end as-built spine — START HERE to resume cold
     └── skills/                 # Auto-trigger skill files (see Skills section)
 ```
 
@@ -322,6 +323,7 @@ pnpm run lint:fix
 - [ ] Add translation keys to `id.json` **and** `en.json`
 - [ ] Run `npm run typecheck && npm run test && npm run build` — all green
 - [ ] Update `docs/ARCHITECTURE.md` if structurally changed
+- [ ] Update the relevant `docs/dossier/` chapter **and** its README index (link, don't duplicate)
 - [ ] Update `aidlc-docs/aidlc-state.md` — mark unit COMPLETE
 - [ ] Get human confirmation before next unit
 
