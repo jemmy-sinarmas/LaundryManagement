@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <rect width="512" height="512" fill="#3b82f6"/>
-  <text x="256" y="370" text-anchor="middle" font-size="280" font-family="system-ui, sans-serif" font-weight="700" fill="white">L</text>
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+    <rect x="87" y="67" width="338" height="379" rx="41" fill="#ffffff"/>
+    <line x1="116" y1="164" x2="396" y2="164" stroke="#3b82f6" stroke-width="10" stroke-linecap="round"/>
+    <rect x="123" y="97" width="61" height="18" rx="9" fill="#3b82f6"/>
+    <rect x="123" y="131" width="61" height="18" rx="9" fill="#3b82f6"/>
+    <circle cx="369" cy="115" r="18" fill="#3b82f6"/>
+    <circle cx="256" cy="307" r="110" fill="#ffffff"/>
+    <circle cx="256" cy="307" r="79" fill="#3b82f6"/>
+  </g>
 </svg>

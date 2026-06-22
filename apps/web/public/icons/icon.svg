@@ -1,10 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Laundry Palu mark: front-loader washing machine -->
+  <!-- machine body -->
   <rect x="87" y="67" width="338" height="379" rx="41" fill="#3b82f6"/>
+  <!-- control panel divider -->
   <line x1="116" y1="164" x2="396" y2="164" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+  <!-- detergent slots -->
   <rect x="123" y="97" width="61" height="18" rx="9" fill="#ffffff" opacity="0.9"/>
   <rect x="123" y="131" width="61" height="18" rx="9" fill="#ffffff" opacity="0.9"/>
+  <!-- control knob -->
   <circle cx="369" cy="115" r="18" fill="#ffffff" opacity="0.9"/>
+  <!-- drum door -->
   <circle cx="256" cy="307" r="110" fill="#ffffff"/>
   <circle cx="256" cy="307" r="79" fill="#bfdbfe"/>
+  <!-- glass highlight -->
   <path d="M212 264 A79 79 0 0 1 256 228" stroke="#ffffff" stroke-width="13" stroke-linecap="round" fill="none" opacity="0.65"/>
 </svg>
