@@ -27,8 +27,14 @@ COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/packages/shared/ ./packages/shared/
-COPY --from=builder /app/apps/api/dist/ ./apps/api/dist/
-COPY --from=builder /app/apps/api/migrations/ ./apps/api/migrations/
+# tsc emits under dist/apps/api/ because the build pulls in packages/shared
+# sources, so the inferred rootDir spans the whole monorepo. Flatten that inner
+# tree to apps/api/dist/* so runtime paths are stable: dist/src/server.js and
+# dist/migrations/run.js.
+COPY --from=builder /app/apps/api/dist/apps/api/ ./apps/api/dist/
+# Ship the raw .sql migrations next to the compiled run.js — tsc does not copy
+# them, and the migration runner reads *.sql from its own __dirname.
+COPY --from=builder /app/apps/api/migrations/ ./apps/api/dist/migrations/
 
 EXPOSE 4000
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["node", "apps/api/dist/src/server.js"]

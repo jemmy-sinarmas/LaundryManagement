@@ -1,0 +1,90 @@
+# Self-hosting stack — build the images on THIS server, serve everything behind a
+# single HTTPS origin via Caddy. Only Caddy is exposed to the internet (80/443);
+# web, api and postgres stay on the internal Docker network.
+#
+# The browser talks to one origin (https://$DOMAIN). Requests to /api/* are
+# reverse-proxied to the Fastify API with the /api prefix stripped, so the auth
+# cookie stays same-origin with the web app and no CORS is involved.
+#
+# Full runbook: docs/DEPLOYMENT.md
+# Usage:
+#   cp .env.deploy.example .env        # then fill in real values
+#   docker compose -f docker-compose.deploy.yml build
+#   docker compose -f docker-compose.deploy.yml up -d postgres
+#   docker compose -f docker-compose.deploy.yml run --rm api \
+#       node apps/api/dist/migrations/run.js --seed   # first deploy only
+#   docker compose -f docker-compose.deploy.yml up -d
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-laundry_palu}
+      POSTGRES_USER: ${POSTGRES_USER:-laundry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Bound to localhost only — handy for admin tools/backups, not internet-facing.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-laundry}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        # Same-origin: the browser calls /api/*, Caddy proxies it to the API.
+        # This is baked into the web bundle at build time (NEXT_PUBLIC_*).
+        NEXT_PUBLIC_API_URL: /api
+    environment:
+      # The web middleware verifies the auth cookie with the SAME secret the
+      # API signs it with — these MUST match.
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      NODE_ENV: production
+      PORT: 3000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

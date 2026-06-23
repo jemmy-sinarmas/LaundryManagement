@@ -500,6 +500,10 @@ Internet → nginx (TLS termination) → Next.js (port 3000) + Fastify (port 400
 - Backup: cron `pg_dump` daily → `/var/backups/laundry-palu/`
 - Environment variables via `.env` (never committed)
 
+> **Concrete runbook:** see [DEPLOYMENT.md](./DEPLOYMENT.md) for the step-by-step
+> container deployment (build on the server + Caddy HTTPS). This section is the
+> conceptual summary; the runbook is the as-built procedure.
+
 ---
 
 ## 9. WhatsApp Notifications (scaffold)

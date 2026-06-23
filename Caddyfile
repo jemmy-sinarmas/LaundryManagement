@@ -1,0 +1,21 @@
+# Single HTTPS origin for Laundry Palu. Caddy obtains and renews Let's Encrypt
+# certificates automatically (needs ports 80/443 reachable and DNS pointed here).
+# $DOMAIN and $ACME_EMAIL are supplied as environment variables by
+# docker-compose.deploy.yml (sourced from .env).
+
+{$DOMAIN} {
+	encode gzip
+
+	# API: strip the /api prefix, then forward to the Fastify service.
+	# handle_path strips the matched prefix, so /api/auth/login -> /auth/login.
+	handle_path /api/* {
+		reverse_proxy api:4000
+	}
+
+	# Everything else -> the Next.js web app.
+	handle {
+		reverse_proxy web:3000
+	}
+
+	tls {$ACME_EMAIL}
+}
